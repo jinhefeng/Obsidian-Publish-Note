@@ -1,0 +1,20 @@
+{
+  "name": "obsidian-publish-note",
+  "version": "0.1.5",
+  "private": true,
+  "description": "Publish Markdown notes and linked pages as shareable websites for Obsidian.",
+  "author": "Jin Hefeng",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jinhefeng/Obsidian-Publish-Note.git"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/publish-flow.test.ts",
+    "demo": "node --experimental-strip-types scripts/demo-publish.ts",
+    "dev:server": "node --experimental-strip-types scripts/local-publish-server.ts",
+    "check:plugin": "node scripts/check-plugin.mjs",
+    "sync:plugin": "node scripts/sync-plugin.mjs",
+    "update:plugin": "npm run check:plugin && npm run sync:plugin"
+  }
+}
