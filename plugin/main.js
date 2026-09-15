@@ -1174,7 +1174,6 @@ class SharePublisherSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     const copy = copyForLanguage(this.plugin.settings.language);
     containerEl.empty();
-    containerEl.createEl("h2", { text: copy.productName });
     containerEl.createEl("p", { text: copy.settingsIntro });
     containerEl.createEl("p", { text: copy.settingsIntroDetails });
     new Setting(containerEl)
