@@ -96,10 +96,10 @@
 
 ## 4. Current Focus
 
-- Task: T4
+- Task: T4 → T5
 - Parent path: T4
-- Objective: 在 Obsidian 中安装插件并发布当前 Markdown 笔记到本地测试服务
-- Next action: 在 Obsidian 中重新加载 `0.1.5` 的 Publish Note，确认设置页双语名称、Publish current note / 发布当前笔记按钮、项目仓库链接和“链接笔记深度 / Linked note depth”默认值 `1`；用指定的大型引用链笔记完成一次真实分片发布，再验证深度 `0/1/2` 和 A→B→C 的页面去重与互链
+- Objective: 完成 Publish Note 的双语交互文案、本地 Git 交付和远程项目接入
+- Next action: 用户完成 GitHub 登录后创建 `jinhefeng/Obsidian-Publish-Note` 并推送本地提交 `c76bb06`；随后在 Obsidian 中重新加载 `0.1.5`，完成真实发布 smoke
 
 ## 5. Decision Log
 
@@ -114,6 +114,7 @@
 
 - Constraints: 海外托管优先；R2 保持私有；MVP 暂不包含账号、收费、统计、搜索、评论、密码保护和主题市场。
 - Dependencies: Obsidian Plugin API；Cloudflare Worker、R2、D1；产品域名和部署凭据将在 T3/T5 接入。
+- Repository handoff: `origin` 已配置为 `https://github.com/jinhefeng/Obsidian-Publish-Note.git`；GitHub 远程仓库尚未创建，当前 `gh` 登录令牌无效。
 - Relevant files, links, or prior agreements:
   - 参考项目: https://github.com/licc168/obsidian-htmlto-link/
   - 工程契约: `.engineering/delivery-plan.md`
@@ -143,6 +144,7 @@
 | 2026-09-15 | 将大发布改为上传会话、约 1 MB 对象分片队列和最后原子 commit；新增 `Linked page depth`，默认 1 层，0 层表示只发布根页面 | 15/15 测试通过；HTTP 上传生命周期、分片重组、不完整上传保旧版本和深度规范化均有断言；插件升级至 0.1.3，待真实 Obsidian smoke | T1.2, T2, T4, T5 |
 | 2026-09-15 | 统一插件对外文案为 Obsidian Share，补齐作者信息、作者链接、发布/打开/复制按钮和设置说明；插件升级至 0.1.4 | 清理开发占位文案，确保名称、操作入口和反馈消息在 manifest、设置页、命令面板、右键菜单、功能区和文档中一致 | T4, T5 |
 | 2026-09-15 | 按用户确认将产品名改为 Publish Note，作者统一为 Jin Hefeng；设置页按钮改为明确的 Publish current note / 发布当前笔记；README、设置和项目链接改为中英文双语 | 消除按钮用途歧义，统一插件名称与作者信息，并为后续 GitHub 项目交付预留固定仓库地址 | T4, T5 |
+| 2026-09-15 | 初始化本地 Git main 分支并提交 `c76bb06`；配置 `origin` 为 `jinhefeng/Obsidian-Publish-Note`，但 GitHub 返回 Repository not found | 本地交付已完成，远程创建等待 GitHub 认证恢复 | T5 |
 
 ## 8. Detail Pointers
 
