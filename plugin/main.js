@@ -824,6 +824,7 @@ const DEFAULT_SETTINGS = {
   includeLinkedPages: true,
   linkedPageDepth: 1,
   useNativeRenderer: true,
+  language: "en",
 };
 
 const REPOSITORY_URL = "https://github.com/jinhefeng/Obsidian-Publish-Note";
@@ -831,23 +832,84 @@ const REPOSITORY_URL = "https://github.com/jinhefeng/Obsidian-Publish-Note";
 const COPY = {
   productName: "Publish Note",
   publishNote: "Publish Note",
-  publishCurrentNote: "Publish current note / 发布当前笔记",
-  openPublishedSite: "Open published site / 打开已发布网站",
-  settingsIntro: "发布当前 Markdown 笔记，并按设置携带链接笔记。 / Publish the active Markdown note and include linked notes according to your settings.",
-  serviceSection: "发布服务 / Publishing service",
-  contentSection: "发布内容 / Published content",
-  serviceUrl: "服务地址 / Service URL",
-  serviceUrlDescription: "发布服务的地址，例如 http://127.0.0.1:8787。 / URL of the publishing service, for example http://127.0.0.1:8787.",
-  accessToken: "访问令牌 / Access token",
-  accessTokenDescription: "用于验证发布服务的令牌；本地默认值为 dev-token。 / Token used to authenticate with the publishing service; the local default is dev-token.",
-  linkedNoteDepth: "链接笔记深度 / Linked note depth",
-  linkedNoteDepthDescription: "0 = 仅发布当前笔记；1 = 包含直接链接；更大的值会继续遍历链接图。 / 0 = current note only; 1 = direct links; higher values continue through the link graph.",
-  nativeRenderer: "使用 Obsidian 渲染器 / Use Obsidian renderer",
-  nativeRendererDescription: "发布时保留 Obsidian 样式和已安装 Markdown 插件的输出。 / Preserve Obsidian styling and installed Markdown plugin output when publishing.",
-  noPublishedLink: "还没有已发布链接，请先发布一篇笔记。 / No published link yet. Publish a note first.",
-  linkCopied: "已复制发布链接。 / Published link copied.",
-  linkCopyFailed: "无法复制发布链接。 / Could not copy the published link.",
+  openPublishedSite: "Open published site",
+  publishCurrentNote: "Publish current note",
+  publishCurrentNoteDescription: "Publishes the active Markdown note.",
+  lastPublishedLink: "Last published link",
+  lastPublishedLinkDescription: "Publish a note to create a share link.",
+  openLink: "Open link",
+  copyLink: "Copy link",
+  repository: "Project repository",
+  open: "Open",
+  settingsIntro: "Publish the active Markdown note and include linked notes according to your settings.",
+  language: "Language",
+  languageDescription: "Choose the language used in this settings page.",
+  serviceSection: "Publishing service",
+  contentSection: "Published content",
+  serviceUrl: "Service URL",
+  serviceUrlDescription: "URL of the publishing service, for example http://127.0.0.1:8787.",
+  accessToken: "Access token",
+  accessTokenDescription: "Token used to authenticate with the publishing service; the local default is dev-token.",
+  linkedNoteDepth: "Linked note depth",
+  linkedNoteDepthDescription: "0 = current note only; 1 = direct links; higher values continue through the link graph.",
+  nativeRenderer: "Use Obsidian renderer",
+  nativeRendererDescription: "Preserve Obsidian styling and installed Markdown plugin output when publishing.",
+  noPublishedLink: "No published link yet. Publish a note first.",
+  linkCopied: "Published link copied.",
+  linkCopyFailed: "Could not copy the published link.",
+  openNote: "Open a Markdown note to publish it.",
+  publishFailed: "Could not publish note",
+  fallbackRenderer: "Obsidian rendering was unavailable; published with the fallback renderer.",
+  cannotReachService: "Cannot reach the publishing service",
+  startLocalServer: "Start the local server and try again.",
+  uploading: (current, total) => `Uploading ${current}/${total} items...`,
+  publishedAndCopied: (url) => `Published and copied link: ${url}`,
+  published: (url) => `Published: ${url}`,
 };
+
+const COPY_ZH = {
+  ...COPY,
+  publishCurrentNote: "发布当前笔记",
+  publishCurrentNoteDescription: "发布当前打开的 Markdown 笔记。",
+  lastPublishedLink: "最近发布的链接",
+  lastPublishedLinkDescription: "发布一篇笔记后会生成分享链接。",
+  openLink: "打开链接",
+  copyLink: "复制链接",
+  repository: "项目仓库",
+  open: "打开",
+  settingsIntro: "发布当前打开的 Markdown 笔记，并按设置携带链接笔记。",
+  language: "语言",
+  languageDescription: "选择设置页面使用的语言。",
+  serviceSection: "发布服务",
+  contentSection: "发布内容",
+  serviceUrl: "服务地址",
+  serviceUrlDescription: "发布服务的地址，例如 http://127.0.0.1:8787。",
+  accessToken: "访问令牌",
+  accessTokenDescription: "用于验证发布服务的令牌；本地默认值为 dev-token。",
+  linkedNoteDepth: "链接笔记深度",
+  linkedNoteDepthDescription: "0 = 仅发布当前笔记；1 = 包含直接链接；更大的值会继续遍历链接图。",
+  nativeRenderer: "使用 Obsidian 渲染器",
+  nativeRendererDescription: "发布时保留 Obsidian 样式和已安装 Markdown 插件的输出。",
+  noPublishedLink: "还没有已发布链接，请先发布一篇笔记。",
+  linkCopied: "已复制发布链接。",
+  linkCopyFailed: "无法复制发布链接。",
+  openNote: "请先打开一个 Markdown 笔记。",
+  publishFailed: "笔记发布失败",
+  fallbackRenderer: "Obsidian 原生渲染不可用，已使用备用渲染器发布。",
+  cannotReachService: "无法连接发布服务",
+  startLocalServer: "请启动本地服务后重试。",
+  uploading: (current, total) => `正在上传 ${current}/${total} 个项目...`,
+  publishedAndCopied: (url) => `已发布并复制链接：${url}`,
+  published: (url) => `已发布：${url}`,
+};
+
+function normalizeLanguage(value) {
+  return value === "zh" ? "zh" : "en";
+}
+
+function copyForLanguage(language) {
+  return normalizeLanguage(language) === "zh" ? COPY_ZH : COPY;
+}
 
 class SharePublisherPlugin extends Plugin {
   async onload() {
@@ -872,6 +934,11 @@ class SharePublisherPlugin extends Plugin {
     );
     this.settings.includeLinkedPages = this.settings.linkedPageDepth > 0;
     this.settings.useNativeRenderer = this.settings.useNativeRenderer !== false;
+    this.settings.language = normalizeLanguage(this.settings.language);
+  }
+
+  copy() {
+    return copyForLanguage(this.settings.language);
   }
 
   async saveSettings() {
@@ -881,7 +948,7 @@ class SharePublisherPlugin extends Plugin {
   async publishCurrentNote() {
     const file = this.app.workspace.getActiveFile();
     if (!file || file.extension !== "md") {
-      new Notice("请先打开一个 Markdown 笔记。 / Open a Markdown note to publish it.");
+      new Notice(this.copy().openNote);
       return;
     }
     await this.publishFile(file);
@@ -906,7 +973,7 @@ class SharePublisherPlugin extends Plugin {
       await this.finishPublish(result, publishedUrl);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      new Notice(`笔记发布失败：${message} / Could not publish note: ${message}`);
+      new Notice(`${this.copy().publishFailed}: ${message}`);
     }
   }
 
@@ -918,7 +985,7 @@ class SharePublisherPlugin extends Plugin {
       return await compileShareWithNative(this, input);
     } catch (error) {
       console.warn(`${COPY.productName}: native Obsidian rendering failed; using fallback renderer`, error);
-      new Notice("Obsidian 原生渲染不可用，已使用备用渲染器发布。 / Obsidian rendering was unavailable; published with the fallback renderer.");
+      new Notice(this.copy().fallbackRenderer);
       return compileShare(input);
     }
   }
@@ -937,7 +1004,8 @@ class SharePublisherPlugin extends Plugin {
       const status = error?.status ?? error?.statusCode ?? error?.response?.status;
       const detail = requestErrorDetail(error);
       if (status) throw new Error(`Publish request failed (${status})${detail ? `: ${detail}` : ""}`);
-      throw new Error(`无法连接发布服务 ${this.settings.apiBaseUrl}，请启动本地服务后重试。 / Cannot reach the publishing service at ${this.settings.apiBaseUrl}. Start the local server and try again.`);
+      const copy = this.copy();
+      throw new Error(`${copy.cannotReachService} ${this.settings.apiBaseUrl}. ${copy.startLocalServer}`);
     }
     if (response.status < 200 || response.status >= 300) {
       const detail = requestErrorDetail(response);
@@ -957,14 +1025,15 @@ class SharePublisherPlugin extends Plugin {
       title: bundle.title,
       chunkCount: chunks.length,
     });
-    const progress = new Notice(`正在上传 0/${chunks.length} 个项目... / Uploading 0/${chunks.length} items...`);
+    const copy = this.copy();
+    const progress = new Notice(copy.uploading(0, chunks.length));
     try {
       for (let index = 0; index < chunks.length; index += 1) {
         await this.requestPublish(`${apiBaseUrl}/v1/uploads/${encodeURIComponent(upload.uploadId)}/chunks`, "POST", {
           uploadId: upload.uploadId,
           ...chunks[index],
         });
-        progress.setMessage?.(`正在上传 ${index + 1}/${chunks.length} 个项目... / Uploading ${index + 1}/${chunks.length} items...`);
+        progress.setMessage?.(copy.uploading(index + 1, chunks.length));
       }
       return await this.requestPublish(`${apiBaseUrl}/v1/uploads/${encodeURIComponent(upload.uploadId)}/commit`, "POST", {
         uploadId: upload.uploadId,
@@ -975,11 +1044,12 @@ class SharePublisherPlugin extends Plugin {
   }
 
   async finishPublish(result, publishedUrl = result.url) {
+    const copy = this.copy();
     try {
       await navigator.clipboard.writeText(publishedUrl);
-      new Notice(`已发布并复制链接：${publishedUrl} / Published and copied link: ${publishedUrl}`);
+      new Notice(copy.publishedAndCopied(publishedUrl));
     } catch {
-      new Notice(`已发布：${publishedUrl} / Published: ${publishedUrl}`);
+      new Notice(copy.published(publishedUrl));
     }
   }
 
@@ -1084,7 +1154,7 @@ class SharePublisherPlugin extends Plugin {
 
   openLastPublishedSite() {
     if (!this.settings.lastPublishedUrl) {
-      new Notice(COPY.noPublishedLink);
+      new Notice(this.copy().noPublishedLink);
       return;
     }
     openExternal(this.settings.lastPublishedUrl);
@@ -1092,14 +1162,14 @@ class SharePublisherPlugin extends Plugin {
 
   async copyLastPublishedLink() {
     if (!this.settings.lastPublishedUrl) {
-      new Notice(COPY.noPublishedLink);
+      new Notice(this.copy().noPublishedLink);
       return;
     }
     try {
       await navigator.clipboard.writeText(this.settings.lastPublishedUrl);
-      new Notice(COPY.linkCopied);
+      new Notice(this.copy().linkCopied);
     } catch {
-      new Notice(COPY.linkCopyFailed);
+      new Notice(this.copy().linkCopyFailed);
     }
   }
 }
@@ -1112,42 +1182,55 @@ class SharePublisherSettingTab extends PluginSettingTab {
 
   display() {
     const { containerEl } = this;
+    const copy = copyForLanguage(this.plugin.settings.language);
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Publish Note / 发布笔记" });
-    containerEl.createEl("p", { text: COPY.settingsIntro });
+    containerEl.createEl("h2", { text: copy.productName });
+    containerEl.createEl("p", { text: copy.settingsIntro });
     new Setting(containerEl)
-      .setName(COPY.publishCurrentNote)
-      .setDesc("发布当前打开的 Markdown 笔记。 / Publishes the active Markdown note.")
-      .addButton((button) => button.setButtonText("Publish / 发布").setCta().onClick(() => void this.plugin.publishCurrentNote()));
+      .setName(copy.language)
+      .setDesc(copy.languageDescription)
+      .addDropdown((dropdown) => dropdown
+        .addOption("en", "English")
+        .addOption("zh", "中文")
+        .setValue(this.plugin.settings.language)
+        .onChange(async (value) => {
+          this.plugin.settings.language = normalizeLanguage(value);
+          await this.plugin.saveSettings();
+          this.display();
+        }));
+    new Setting(containerEl)
+      .setName(copy.publishCurrentNote)
+      .setDesc(copy.publishCurrentNoteDescription)
+      .addButton((button) => button.setButtonText(copy.publishCurrentNote).setCta().onClick(() => void this.plugin.publishCurrentNote()));
     const lastPublishedUrl = this.plugin.settings.lastPublishedUrl;
     new Setting(containerEl)
-      .setName("最近发布的链接 / Last published link")
-      .setDesc(lastPublishedUrl || "发布一篇笔记后会生成分享链接。 / Publish a note to create a share link.")
-      .addButton((button) => button.setButtonText("Open link / 打开链接").setDisabled(!lastPublishedUrl).onClick(() => this.plugin.openLastPublishedSite()))
-      .addButton((button) => button.setButtonText("Copy link / 复制链接").setDisabled(!lastPublishedUrl).onClick(() => void this.plugin.copyLastPublishedLink()));
+      .setName(copy.lastPublishedLink)
+      .setDesc(lastPublishedUrl || copy.lastPublishedLinkDescription)
+      .addButton((button) => button.setButtonText(copy.openLink).setDisabled(!lastPublishedUrl).onClick(() => this.plugin.openLastPublishedSite()))
+      .addButton((button) => button.setButtonText(copy.copyLink).setDisabled(!lastPublishedUrl).onClick(() => void this.plugin.copyLastPublishedLink()));
     new Setting(containerEl)
-      .setName("项目仓库 / Project repository")
+      .setName(copy.repository)
       .setDesc(REPOSITORY_URL)
-      .addButton((button) => button.setButtonText("Open / 打开").onClick(() => openExternal(REPOSITORY_URL)));
-    containerEl.createEl("h3", { text: COPY.serviceSection });
+      .addButton((button) => button.setButtonText(copy.open).onClick(() => openExternal(REPOSITORY_URL)));
+    containerEl.createEl("h3", { text: copy.serviceSection });
     new Setting(containerEl)
-      .setName(COPY.serviceUrl)
-      .setDesc(COPY.serviceUrlDescription)
+      .setName(copy.serviceUrl)
+      .setDesc(copy.serviceUrlDescription)
       .addText((text) => text.setPlaceholder(DEFAULT_SETTINGS.apiBaseUrl).setValue(this.plugin.settings.apiBaseUrl).onChange(async (value) => {
         this.plugin.settings.apiBaseUrl = value.trim().replace(/\/$/, "");
         await this.plugin.saveSettings();
       }));
     new Setting(containerEl)
-      .setName(COPY.accessToken)
-      .setDesc(COPY.accessTokenDescription)
+      .setName(copy.accessToken)
+      .setDesc(copy.accessTokenDescription)
       .addText((text) => text.setPlaceholder(DEFAULT_SETTINGS.publishToken).setValue(this.plugin.settings.publishToken).onChange(async (value) => {
         this.plugin.settings.publishToken = value.trim();
         await this.plugin.saveSettings();
       }));
-    containerEl.createEl("h3", { text: COPY.contentSection });
+    containerEl.createEl("h3", { text: copy.contentSection });
     new Setting(containerEl)
-      .setName(COPY.linkedNoteDepth)
-      .setDesc(COPY.linkedNoteDepthDescription)
+      .setName(copy.linkedNoteDepth)
+      .setDesc(copy.linkedNoteDepthDescription)
       .addText((text) => {
         text.setValue(String(this.plugin.settings.linkedPageDepth)).setPlaceholder("1");
         text.inputEl.type = "number";
@@ -1161,8 +1244,8 @@ class SharePublisherSettingTab extends PluginSettingTab {
         });
     });
     new Setting(containerEl)
-      .setName(COPY.nativeRenderer)
-      .setDesc(COPY.nativeRendererDescription)
+      .setName(copy.nativeRenderer)
+      .setDesc(copy.nativeRendererDescription)
       .addToggle((toggle) => toggle.setValue(this.plugin.settings.useNativeRenderer !== false).onChange(async (value) => {
         this.plugin.settings.useNativeRenderer = value;
         await this.plugin.saveSettings();

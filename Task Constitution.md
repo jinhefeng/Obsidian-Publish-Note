@@ -98,8 +98,8 @@
 
 - Task: T4 → T5
 - Parent path: T4
-- Objective: 完成 Publish Note 的双语交互文案、本地 Git 交付和远程项目接入
-- Next action: 用户完成 GitHub 登录后创建 `jinhefeng/Obsidian-Publish-Note` 并推送本地提交 `c76bb06`；随后在 Obsidian 中重新加载 `0.1.5`，完成真实发布 smoke
+- Objective: 完成 Publish Note 的语言切换交互、文档交付和真实插件验证
+- Next action: 在 Obsidian 中重新加载 `0.1.5`，确认设置页默认英文、可切换中文，完成真实发布 smoke
 
 ## 5. Decision Log
 
@@ -114,7 +114,7 @@
 
 - Constraints: 海外托管优先；R2 保持私有；MVP 暂不包含账号、收费、统计、搜索、评论、密码保护和主题市场。
 - Dependencies: Obsidian Plugin API；Cloudflare Worker、R2、D1；产品域名和部署凭据将在 T3/T5 接入。
-- Repository handoff: `origin` 已配置为 `https://github.com/jinhefeng/Obsidian-Publish-Note.git`；GitHub 远程仓库尚未创建，当前 `gh` 登录令牌无效。
+- Repository handoff: `origin` 已配置并推送至 `https://github.com/jinhefeng/Obsidian-Publish-Note.git`；GitHub 远程项目已创建。
 - Relevant files, links, or prior agreements:
   - 参考项目: https://github.com/licc168/obsidian-htmlto-link/
   - 工程契约: `.engineering/delivery-plan.md`
@@ -145,6 +145,7 @@
 | 2026-09-15 | 统一插件对外文案为 Obsidian Share，补齐作者信息、作者链接、发布/打开/复制按钮和设置说明；插件升级至 0.1.4 | 清理开发占位文案，确保名称、操作入口和反馈消息在 manifest、设置页、命令面板、右键菜单、功能区和文档中一致 | T4, T5 |
 | 2026-09-15 | 按用户确认将产品名改为 Publish Note，作者统一为 Jin Hefeng；设置页按钮改为明确的 Publish current note / 发布当前笔记；README、设置和项目链接改为中英文双语 | 消除按钮用途歧义，统一插件名称与作者信息，并为后续 GitHub 项目交付预留固定仓库地址 | T4, T5 |
 | 2026-09-15 | 初始化本地 Git main 分支并提交 `c76bb06`；配置 `origin` 为 `jinhefeng/Obsidian-Publish-Note`，但 GitHub 返回 Repository not found | 本地交付已完成，远程创建等待 GitHub 认证恢复 | T5 |
+| 2026-09-15 | GitHub 登录恢复后创建 `jinhefeng/Obsidian-Publish-Note` 并推送 `main`；README 改为英文默认、中文独立页面和顶部语言切换；设置页新增默认英文/中文切换器 | README 不再并排重复两种语言，设置页可按用户选择显示单一语言 | T4, T5 |
 
 ## 8. Detail Pointers
 
