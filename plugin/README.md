@@ -26,8 +26,6 @@ The installable entry point is self-contained: `manifest.json` and `main.js` are
 
 4. Open a Markdown note and choose **Publish Note** from the command palette, ribbon upload icon, or note context menu.
 
-   The settings-page button **Publish current note** publishes the Markdown note that is currently open.
-
 5. The published URL is copied automatically. The root page is `index.html`; linked pages use `page-1.html`, `page-2.html`, and so on.
 
 ## Settings

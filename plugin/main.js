@@ -833,15 +833,10 @@ const COPY = {
   productName: "Publish Note",
   publishNote: "Publish Note",
   openPublishedSite: "Open published site",
-  publishCurrentNote: "Publish current note",
-  publishCurrentNoteDescription: "Publishes the active Markdown note.",
-  lastPublishedLink: "Last published link",
-  lastPublishedLinkDescription: "Publish a note to create a share link.",
-  openLink: "Open link",
-  copyLink: "Copy link",
   repository: "Project repository",
   open: "Open",
-  settingsIntro: "Publish the active Markdown note and include linked notes according to your settings.",
+  settingsIntro: "Publish Note turns an Obsidian Markdown note into a shareable website. It keeps the current note as the entry page, can include linked notes, uploads referenced local assets, and copies a stable link after publishing.",
+  settingsIntroDetails: "Configure the publishing service and content scope below. Publish from the command palette, the ribbon icon, or a note's context menu.",
   language: "Language",
   languageDescription: "Choose the language used in this settings page.",
   serviceSection: "Publishing service",
@@ -869,15 +864,10 @@ const COPY = {
 
 const COPY_ZH = {
   ...COPY,
-  publishCurrentNote: "发布当前笔记",
-  publishCurrentNoteDescription: "发布当前打开的 Markdown 笔记。",
-  lastPublishedLink: "最近发布的链接",
-  lastPublishedLinkDescription: "发布一篇笔记后会生成分享链接。",
-  openLink: "打开链接",
-  copyLink: "复制链接",
   repository: "项目仓库",
   open: "打开",
-  settingsIntro: "发布当前打开的 Markdown 笔记，并按设置携带链接笔记。",
+  settingsIntro: "Publish Note 可以将 Obsidian Markdown 笔记转换为可分享的网站。它会以当前笔记作为入口页面，可携带链接笔记，上传笔记引用的本地资源，并在发布后复制稳定链接。",
+  settingsIntroDetails: "请在下面配置发布服务和发布内容范围。你可以从命令面板、功能区图标或笔记右键菜单发起发布。",
   language: "语言",
   languageDescription: "选择设置页面使用的语言。",
   serviceSection: "发布服务",
@@ -1186,6 +1176,7 @@ class SharePublisherSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: copy.productName });
     containerEl.createEl("p", { text: copy.settingsIntro });
+    containerEl.createEl("p", { text: copy.settingsIntroDetails });
     new Setting(containerEl)
       .setName(copy.language)
       .setDesc(copy.languageDescription)
@@ -1198,20 +1189,6 @@ class SharePublisherSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
           this.display();
         }));
-    new Setting(containerEl)
-      .setName(copy.publishCurrentNote)
-      .setDesc(copy.publishCurrentNoteDescription)
-      .addButton((button) => button.setButtonText(copy.publishCurrentNote).setCta().onClick(() => void this.plugin.publishCurrentNote()));
-    const lastPublishedUrl = this.plugin.settings.lastPublishedUrl;
-    new Setting(containerEl)
-      .setName(copy.lastPublishedLink)
-      .setDesc(lastPublishedUrl || copy.lastPublishedLinkDescription)
-      .addButton((button) => button.setButtonText(copy.openLink).setDisabled(!lastPublishedUrl).onClick(() => this.plugin.openLastPublishedSite()))
-      .addButton((button) => button.setButtonText(copy.copyLink).setDisabled(!lastPublishedUrl).onClick(() => void this.plugin.copyLastPublishedLink()));
-    new Setting(containerEl)
-      .setName(copy.repository)
-      .setDesc(REPOSITORY_URL)
-      .addButton((button) => button.setButtonText(copy.open).onClick(() => openExternal(REPOSITORY_URL)));
     containerEl.createEl("h3", { text: copy.serviceSection });
     new Setting(containerEl)
       .setName(copy.serviceUrl)
@@ -1250,6 +1227,10 @@ class SharePublisherSettingTab extends PluginSettingTab {
         this.plugin.settings.useNativeRenderer = value;
         await this.plugin.saveSettings();
       }));
+    new Setting(containerEl)
+      .setName(copy.repository)
+      .setDesc(REPOSITORY_URL)
+      .addButton((button) => button.setButtonText(copy.open).onClick(() => openExternal(REPOSITORY_URL)));
   }
 }
 

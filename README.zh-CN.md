@@ -39,9 +39,7 @@ npm run check:plugin
 
 3. 在 Obsidian 中打开 **设置 → 社区插件**，启用 **Publish Note**。
 
-4. 打开 Markdown 笔记，从命令面板、功能区上传图标或右键菜单选择 **Publish Note**。
-
-设置页中的 **发布当前笔记** 按钮会发布当前正在打开的 Markdown 笔记。发布链接会自动复制到剪贴板。根页面为 `index.html`，链接页面依次使用 `page-1.html`、`page-2.html` 等路径。
+4. 打开 Markdown 笔记，从命令面板、功能区上传图标或右键菜单选择 **Publish Note**。发布链接会自动复制到剪贴板。根页面为 `index.html`，链接页面依次使用 `page-1.html`、`page-2.html` 等路径。
 
 本地服务使用内存存储，重启后已发布内容会清空；它只用于验证插件交互和发布契约。
 

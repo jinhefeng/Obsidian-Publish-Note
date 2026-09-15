@@ -1,6 +1,6 @@
 {
   "name": "obsidian-publish-note",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "Publish Markdown notes and linked pages as shareable websites for Obsidian.",
   "author": "Jin Hefeng",
