@@ -115,6 +115,7 @@
 - Constraints: 海外托管优先；R2 保持私有；MVP 暂不包含账号、收费、统计、搜索、评论、密码保护和主题市场。
 - Dependencies: Obsidian Plugin API；Cloudflare Worker、R2、D1；产品域名和部署凭据将在 T3/T5 接入。
 - Repository handoff: `origin` 已配置并推送至 `https://github.com/jinhefeng/Obsidian-Publish-Note.git`；GitHub 远程项目已创建。
+- Agent handoff: 长期项目要求集中记录在 `AGENTS.md`，后续代理进入项目时先读取该文件。
 - Relevant files, links, or prior agreements:
   - 参考项目: https://github.com/licc168/obsidian-htmlto-link/
   - 工程契约: `.engineering/delivery-plan.md`
@@ -147,6 +148,7 @@
 | 2026-09-15 | 初始化本地 Git main 分支并提交 `c76bb06`；配置 `origin` 为 `jinhefeng/Obsidian-Publish-Note`，但 GitHub 返回 Repository not found | 本地交付已完成，远程创建等待 GitHub 认证恢复 | T5 |
 | 2026-09-15 | GitHub 登录恢复后创建 `jinhefeng/Obsidian-Publish-Note` 并推送 `main`；README 改为英文默认、中文独立页面和顶部语言切换；设置页新增默认英文/中文切换器 | README 不再并排重复两种语言，设置页可按用户选择显示单一语言 | T4, T5 |
 | 2026-09-15 | 精简设置页：移除发布当前笔记和最近发布链接区块，将详细工具介绍置顶，并把项目仓库移到最底部；插件升级至 0.1.6 | 设置页聚焦服务与内容配置，避免与命令面板和右键菜单重复 | T4 |
+| 2026-09-15 | 创建项目根目录 `AGENTS.md`，整理 Publish Note 的长期产品、交互、双语文档、Git、验证和兼容性要求 | 将本会话形成的跨文件约束沉淀为后续代理可直接执行的工程规范 | T4, T5 |
 
 ## 8. Detail Pointers
 
