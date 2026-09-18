@@ -25,6 +25,10 @@ export class MemoryStorage implements PublishStorage {
 
   async getAccountByEmail(email: string): Promise<AccountRecord | undefined> { const id = this.accountByEmail.get(email); return id ? this.getAccount(id) : undefined; }
   async getAccount(accountId: string): Promise<AccountRecord | undefined> { const value = this.accounts.get(accountId); return value ? { ...value } : undefined; }
+  async findProvisioningAccount(): Promise<AccountRecord | undefined> {
+    const account = [...this.accounts.values()].find((value) => value.email.endsWith("@selfhosted.publish-note.invalid"));
+    return account ? { ...account } : undefined;
+  }
   async createAccount(account: AccountRecord, recoveryCode: RecoveryCodeRecord): Promise<void> {
     if (this.accountByEmail.has(account.email)) throw new ServiceError(409, "CONFLICT", "An account with this email already exists");
     this.accounts.set(account.id, { ...account });

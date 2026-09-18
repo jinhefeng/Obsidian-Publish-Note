@@ -9,7 +9,7 @@
 ## 2. Success Criteria
 
 - [ ] 一篇 Markdown 笔记可以从本地编译为可访问的 HTML 网站资源。
-- [ ] 插件或本地发布客户端可以上传一个发布包，并获得稳定的 `/s/{siteId}` 链接。
+- [ ] 插件或本地发布客户端可以上传一个发布包，并获得稳定的账户 Worker 主机名与 `/s/{siteId}` 链接；断开后重新部署会复用可识别的历史 Publish Note D1/Worker，缺失资源按需补建。
 - [ ] 同一站点再次发布时复用原链接，并以新 revision 原子切换内容。
 - [ ] Worker 通过私有存储提供网页访问；官方 R2 不直接暴露，个人 D1-only 不创建 R2 bucket。
 - [ ] WikiLink、图片、基础 Markdown、原生 Obsidian 渲染快照、文件名标题、字体样式和引用页面发布满足 MVP 验收样例。
@@ -100,19 +100,31 @@
 - Status: 进行中；已有 Worker/D1 和有效 Token，待全新 Vault 与移动端验收
 - Objective: 让 Obsidian 桌面插件通过公开 OAuth + PKCE 直接创建 Worker/D1、上传内嵌 artifact、初始化目标 Worker 和保存 Token；个人路径不请求或创建 R2
 - Acceptance: 桌面端完成 loopback callback、资源创建、migration、一次性初始化、secret 删除和 OAuth revoke；移动端禁用部署但可使用同步后的 Worker；失败不覆盖既有可用配置；不请求 provisioning control plane
-- Evidence: `plugin/main.js` 的 `provisionPersonalCloudflare`/`runDirectCloudflareDeployment`、`scripts/build-plugin.mjs`、`tests/plugin-cloudflare.test.ts`
+- Evidence: `plugin/main.js` 的 `provisionPersonalCloudflare`/`runDirectCloudflareDeployment`、`scripts/build-plugin.mjs`、`tests/plugin-cloudflare.test.ts`; 0.2.21 检查 D1 表结构并复用历史 Publish Note 数据库与 Worker，通过 reconnect 为原账户签发新 Token；Worker 或 D1 缺失时仅补建缺失资源
 
 ### T5 — 集成验证与 MVP 交付
 - Status: 进行中
 - Objective: 完成真实插件、个人 Worker、console 和 viewer 的集成验收；官方控制面与官方 Worker 保留为后续规划
 - Acceptance: 发布、更新、失败恢复、配额、删除、恢复、权限隔离和桌面直连 OAuth 部署路径全部有证据；官方设备授权不属于当前插件验收路径；Deploy Button 仅作为高级备用路径
-- Children: 在 T2–T4 形成可集成版本后展开
+- Children: T5.1, T5.2, T5.3
 
 #### T5.1 — 桌面直连个人部署真实验收
 - Status: 进行中；已修复并部署 D1 commit 500，且修复原生 CSS 资产 400，待真实插件首发/更新复验
 - Objective: 用公开 OAuth Client 和真实 Cloudflare 账户验证插件设置页直接完成 Worker/D1-only 部署、发布、更新和删除
 - Acceptance: 全新桌面 Vault 不填服务地址/Token，授权后仅出现 Worker、D1，插件可直接 Publish Note；移动端同步配置后可发布；重复/冲突/失败/拒绝路径有证据
-- Evidence: 用户日志确认上传会话及三次分片均 200，但 commit 因原生 CSS 使用 utf8 被 Worker 正确拒绝；0.2.11 修复 D1 数组 BLOB，0.2.13 改为 base64 资产；65 项测试通过，完整重载 Obsidian 后合成笔记已在现有个人 Worker 首发成功；详见 `.engineering/manual-test-findings.md`
+- Evidence: 用户日志确认上传会话及三次分片均 200，但 commit 因原生 CSS 使用 utf8 被 Worker 正确拒绝；0.2.11 修复 D1 数组 BLOB，0.2.13 改为 base64 资产；70 项测试通过，完整重载 Obsidian 后合成笔记已在现有个人 Worker 首发成功；详见 `.engineering/manual-test-findings.md`
+
+#### T5.2 — Obsidian 发布产物自动同步
+- Status: 进行中；0.2.23 已生成根目录镜像、Release 暂存包并同步开发 Vault，待提交到远程 main
+- Objective: 让 `plugin/` 成为唯一插件源目录，并自动同步根目录、Release 暂存目录和 Vault 安装目录
+- Acceptance: `plugin/manifest.json` 与 `plugin/main.js` 经过构建后生成根目录 `manifest.json`/`main.js`、`dist/obsidian-release/` 中的精确发布文件以及 Vault runtime；parity check 能拒绝过期或多余文件；`compiler.js`、`src/`、`server/` 不进入 Release
+- Evidence: `scripts/package-plugin.mjs`, `npm run update:plugin`, `npm run check:plugin`, `LICENSE`, `manifest.json`, `main.js`
+
+#### T5.3 — GitHub Release 与社区目录交付
+- Status: 进行中；自动化工作流已加入，待推送 main、创建 0.2.23 tag 并完成社区目录提交
+- Objective: 让每个版本以准确的 manifest 版本生成 GitHub Release，并满足 Obsidian Community 根目录校验
+- Acceptance: 根目录有 manifest、README、LICENSE；Release tag 与 `plugin/manifest.json` 版本一致；Release 仅包含 `main.js`、`manifest.json` 和可选 `styles.css`；main push/tag workflow 在镜像漂移时失败
+- Evidence: `.github/workflows/plugin-release.yml`, `README.md`, `README.zh-CN.md`, `LICENSE`; 官方规则以 `https://docs.obsidian.md/plugins/releasing/submit-plugin` 为准
 
 ### T6 — 零星项目 / Miscellaneous
 - Status: 未开始
@@ -122,10 +134,10 @@
 
 ## 4. Current Focus
 
-- Task: T4 → T5
-- Parent path: T4
-- Objective: 完成个人桌面直连 Cloudflare OAuth/API 的真实插件验证，并保留官方控制面为后续规划
-- Next action: 复验修复后的真实桌面发布/更新；随后补全新 Vault 部署和移动端同步发布验收，官方设备授权暂不作为当前插件验收路径
+- Task: T5.2 → T5.3
+- Parent path: T5
+- Objective: 完成插件发布产物自动同步、GitHub Release 校验和 Obsidian 社区目录提交准备
+- Next action: 检查并提交 0.2.23 的根目录镜像、MIT License 与自动化工作流；随后创建匹配版本的 Release 并提交社区目录，真实桌面部署验收继续保留为并行验收项
 
 ## 5. Decision Log
 
@@ -139,6 +151,8 @@
 | 2026-09-17 | 官方托管保留控制面，个人部署改为桌面插件直连 Cloudflare OAuth/API | 控制面只承担官方账户、设备、Token、配额和租户隔离；个人资源归用户且不依赖项目方 provisioning 服务 | T3.1 降级为 legacy；T4.6 使用 PKCE/loopback/内存 token；移动版仅消费同步后的个人配置 |
 | 2026-09-18 | 个人部署收敛为 D1-only | 用户不应为了发布笔记开通 R2；D1 Free 的限制是可预期的硬限制 | 个人 OAuth 移除 R2 scope，创建资源只剩 Worker/D1，内容按 1 MB BLOB 分片；单文件上限 20 MB |
 | 2026-09-18 | 新增“取消连接” | 用户需要停止当前 Vault 发布，但不应误删 Cloudflare Worker、D1、已发布网站或其他设备连接 | 只清除本地 Worker 地址、Publish Token 和兼容字段；执行前确认；重新连接仍需重新完成部署 |
+| 2026-09-18 | 插件升级至 0.2.19，个人部署优先使用固定 Worker 名称 `publish-note` | D1 与 Worker 属于不同 Cloudflare 命名空间，D1 同名不应导致分享域名变化 | 仅在 Worker 名称冲突时使用可预测账户后缀；已有旧地址继续有效 |
+| 2026-09-18 | 插件升级至 0.2.20，重部署前检查 D1 表结构并复用历史 Publish Note 数据库 | 断开连接只清除 Vault 中的连接，不能让历史站点内容随新部署分裂到新库 | 识别历史库后跳过重复 bootstrap，复用原账户并重新签发 Publish Token；多库歧义时安全停止 |
 
 ## 6. Knowledge Context
 
@@ -197,6 +211,11 @@
 | 2026-09-18 | 插件升级至 0.2.16，将“已连接”和“取消连接”合并到同一个 Cloudflare 设置块 | 让连接状态、说明和解除操作在同一处呈现，减少用户对两个独立设置项的误解 | T4.3 |
 | 2026-09-18 | 插件升级至 0.2.17，按当前个人 Cloudflare/D1-only 实现重写设置与中英文 README 文案 | 移除设置页能力误解，明确当前笔记、链接深度、本地资源、分片提交、frontmatter 回写、OAuth/调试和 R2 边界 | T4.3, T5.1 |
 | 2026-09-18 | 插件升级至 0.2.18，精简解绑与仓库访问按钮文案 | 降低设置页操作区的排版复杂度，并使用更直接的“Visit/访问”按钮文本 | T4.3 |
+| 2026-09-18 | 插件升级至 0.2.19，稳定个人 Worker 主机名选择并同步中英文文档 | 避免无关 D1 名称冲突让分享域名出现账户片段 | T4.3, T4.6 |
+| 2026-09-18 | 插件升级至 0.2.20，加入历史 D1 识别、复用和 reconnect Token 流程并同步中英文说明 | 解决断开后重新部署导致旧站点内容留在原 D1、新内容写入新 D1 的问题 | T4.3, T4.6 |
+| 2026-09-18 | 插件升级至 0.2.21，复用历史 Publish Note D1 与 Worker，并改为设置页内确认取消连接、合并重复刷新 | 断开后重部署保留原分享域名与内容；避免原生确认框抢占设置页焦点，确保取消操作不会关闭设置弹窗或重绘两次 | T4.3, T4.6 |
+| 2026-09-19 | 插件升级至 0.2.22，优化取消连接确认态 | 点击取消连接后隐藏已连接按钮，仅显示确认和取消；取消恢复原状，确认才执行解绑 | T4.3 |
+| 2026-09-19 | 插件升级至 0.2.23，建立 Obsidian 社区发布产物同步边界并加入 MIT License | 统一 `plugin/` 源文件到根目录镜像、Release 暂存包和 Vault 的自动同步，避免版本更新漏传 manifest 或 main.js | T5.2, T5.3 |
 
 ## 8. Detail Pointers
 

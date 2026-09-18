@@ -12,6 +12,7 @@ Publish Obsidian Markdown notes as stable, accessible share websites, with linke
 - External URLs, `mailto:` links, anchors, and external assets remain unchanged and are never added to the linked-page queue.
 - Uses Obsidian's native renderer when available and falls back to the deterministic renderer when needed.
 - The published URL is copied automatically; successful publishing stores `share_site_id`, `share_link`, and `share_updated` in the root note's frontmatter so later updates can keep the same site.
+- Personal deployments prefer the fixed Worker name `publish-note`, so the account hostname stays predictable; a suffix is used only when that Worker name is already occupied.
 - Optional **Debug mode** records sanitized deployment and publishing request/response details in the settings page. It never records tokens, request bodies, or note content, and the log can be copied for troubleshooting.
 
 ## Validation
@@ -24,6 +25,10 @@ npm run check:plugin
 npm run check:worker
 ```
 
+## Plugin packaging
+
+Maintainers edit `plugin/manifest.json` and `plugin/main.js` as the plugin release sources. Run `npm run update:plugin` after a version or runtime change. The command rebuilds the embedded Worker artifact, generates the root `manifest.json` and `main.js` mirrors, prepares `dist/obsidian-release/`, validates parity, and syncs the runtime files to the development Vault. Upload only the generated `main.js` and `manifest.json` from the release staging directory to a GitHub Release; `src/`, `server/`, `plugin/`, and `plugin/compiler.js` are not plugin installation assets.
+
 ## Cloudflare publishing
 
 Publish Note serves pages through Cloudflare Workers at `/s/{siteId}/`. The supported personal path uses a Worker and D1 in your Cloudflare account; current content is stored as D1 BLOB chunks and does not create or require R2. The planned official hosted path may use Worker, R2, and D1. Each account has a 50 MB current-content quota and up to 10 published Notes.
@@ -33,6 +38,10 @@ Publish Note serves pages through Cloudflare Workers at `/s/{siteId}/`. The supp
 To stop using the connection in this Vault, click **Disconnect from my Cloudflare** in settings. This removes only the saved Worker URL and Publish Token from the Vault; it does not delete Cloudflare resources, published sites, or connections on other devices.
 
 The primary personal deployment flow starts in the Obsidian settings page on desktop. Click **Deploy to my Cloudflare**, authorize the public Publish Note OAuth application in Cloudflare, and let the plugin create and initialize a private Worker and D1 database directly in your account. The plugin creates the initial private account and scoped Publish Token during setup; no email/password form or user-provided OAuth client is required. Content is stored as D1 BLOB chunks; no R2 bucket or R2 subscription is created. The plugin keeps the Cloudflare access token in memory only, revokes it after deployment, and saves only the Worker URL and scoped Publish Token.
+
+The personal deployment prefers the stable Worker name `publish-note`. The hostname therefore normally stays the same for that Cloudflare account while each note keeps its stable `/s/{siteId}` path. If another Worker already uses that name, Publish Note chooses a deterministic account-based suffix; an existing older or suffixed Worker URL remains valid and is not silently renamed.
+
+When reconnecting after **Disconnect**, the plugin inspects same-pattern D1 databases and reuses one whose schema is recognized as Publish Note. It also matches and updates the existing historical Publish Note Worker in place, preserving its hostname, then issues a new token for the existing personal account. If either resource is missing, Publish Note creates only the missing Worker or D1 and binds it to the resource that was found. Ambiguous historical databases still stop deployment instead of splitting content across new resources.
 
 D1-only keeps the normal publishing experience for notes, linked pages, images, and mobile publishing after setup. Individual files are limited to 20 MB and content is split into 1 MB chunks to stay within D1 and Workers Free request limits. Free-plan D1 limits are hard limits rather than automatic overage charges; see Cloudflare's [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) and [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
 

@@ -69,6 +69,18 @@
 - Verification: `tests/plugin-cloudflare.test.ts` covers PKCE, direct resource creation, revoke, mobile guard and name conflicts; `tests/provisioning.test.ts` remains a legacy control-plane regression; real desktop/Cloudflare smoke remains pending
 - Change rule: resource names, OAuth scopes, artifact version, callback lifetime or target initialization claim changes require plugin, Worker artifact, build and security tests together
 
+### Contract C-009 — Obsidian plugin release artifacts
+
+- Status: frozen for 0.2.23
+- Producer: CMP-017 / WP-005
+- Consumers: Obsidian Community directory, GitHub Release, local Obsidian Vault
+- Owner: T5
+- Inputs: hand-maintained `plugin/manifest.json` and self-contained `plugin/main.js`; optional `plugin/styles.css`
+- Outputs: root `manifest.json`/`main.js` mirrors, `dist/obsidian-release/` assets, and Vault `.obsidian/plugins/share-publisher/` runtime files
+- Compatibility: `plugin/manifest.json` is the sole version authority; all generated manifest and runtime copies must be byte-identical to their source; Release tag must equal the `x.y.z` manifest version; `plugin/compiler.js`, source directories, and test files are never Release assets
+- Verification: `scripts/package-plugin.mjs`, `npm run check:plugin`, `npm run update:plugin`, and `.github/workflows/plugin-release.yml`
+- Change rule: changing the source/target mapping, allowed Release files, or version authority requires updating the packaging script, parity check, README pairs, AGENTS.md, and release workflow together
+
 ### Contract C-003 — Site Metadata and revision rules
 
 - Status: frozen
@@ -151,11 +163,11 @@
 - `package_id`: WP-005
 - `goal`: 验证插件、发布服务和 viewer 的完整 MVP 链路
 - `owner`: Codex
-- `scope`: `tests`, smoke scripts, release docs
+- `scope`: `tests`, smoke scripts, release docs, `scripts/package-plugin.mjs`, root plugin mirrors, `LICENSE`, and `.github/workflows/plugin-release.yml`
 - `non_goals`: 生产运营、计费、内容审核平台
 - `dependencies`: WP-002, WP-003, WP-004, C-003, C-004
-- `acceptance`: 首发、更新、幂等重试、失败回滚、链接访问和资源路径检查全部有证据
-- `status`: active
+- `acceptance`: 首发、更新、幂等重试、失败回滚、链接访问和资源路径检查全部有证据；插件源文件可生成一致的根目录镜像、Release 暂存包和 Vault runtime；社区提交要求的 manifest、README、LICENSE、版本 tag 和 Release assets 可校验
+- `status`: active — plugin distribution synchronization implemented locally; remote main/release/community submission pending
 - `task_refs`: T5
 
 ### WP-CF-1 — Portable Cloudflare service core

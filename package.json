@@ -1,6 +1,6 @@
 {
   "name": "obsidian-publish-note",
-  "version": "0.2.0",
+  "version": "0.2.23",
   "private": true,
   "description": "Publish active Obsidian Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
   "author": "Jin Hefeng",
@@ -32,8 +32,9 @@
     "deploy": "npm run cf:migrate:remote && npx wrangler deploy",
     "check:plugin": "node scripts/check-plugin.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
+    "package:plugin": "node scripts/package-plugin.mjs",
     "sync:plugin": "node scripts/sync-plugin.mjs",
-    "update:plugin": "npm run build:plugin && npm run check:plugin && npm run sync:plugin"
+    "update:plugin": "npm run build:plugin && npm run package:plugin && npm run check:plugin && npm run sync:plugin"
   },
   "cloudflare": {
     "bindings": {

@@ -24,6 +24,7 @@
 | Viewer | 解析 `/s/{siteId}/{path}`，经 Worker 流式返回 current revision 的 HTML/asset | T3 | Storage | C-004 |
 | Official Publish Control Plane | 官方托管路径的账户、设备授权、Publish Token、配额、租户隔离和站点管理 | T3 | Official Worker, D1/R2 | C-006/C-007 |
 | Personal Desktop Provisioner | 桌面插件通过 Authorization Code + PKCE、loopback callback 和 Cloudflare API 创建个人 Worker/D1，执行 migration/初始化并保存发布配置 | T4 | Cloudflare OAuth/API, embedded Worker artifact, target Worker | C-008 |
+| Plugin Distribution and Release Packaging | 从 `plugin/` 唯一源生成根目录镜像、Release 暂存包和 Vault runtime，并校验版本/内容一致性 | T5 | Plugin artifact, manifest, Obsidian release rules | C-009 |
 | Target Worker Bootstrap Boundary | 新建 Worker 接收一次性 bootstrap secret + HMAC claim，创建首个账户和 Publish Token；不依赖外部 provisioning control plane | T3/T4 | Target Worker, Personal Desktop Provisioner | C-008 |
 | Legacy Provisioning Control Plane | 旧版 start/poll/ack 实现，仅为兼容窗口保留，不属于新的个人部署主链路 | T3 | `server/provisioner`, provisioning D1 | historical C-008 |
 
@@ -42,6 +43,7 @@ PublishStorage
 Obsidian Plugin ──── official mode ───> Official Worker control/publish API
 Obsidian Desktop ─── personal mode ──> Cloudflare OAuth/API ──> Target Worker bootstrap
 Obsidian Plugin ───> PublishBundle + C-005 ───> Any selected Worker HTTP Router
+Plugin sources ───> Distribution Packaging ───> Community root / GitHub Release / Vault runtime
 Browser ───────────> Console / Viewer ───────> Worker HTTP Router
 ```
 
@@ -68,6 +70,8 @@ Compiler 不依赖 Obsidian UI 或 Cloudflare SDK；发布服务不解析 Markdo
 - Constraint: 个人部署只在 Obsidian 桌面版执行；插件使用公开 OAuth Client + S256 PKCE 和固定 `http://127.0.0.1:8976/oauth/callback`，不携带 client secret。
 - Constraint: Cloudflare OAuth access token 仅在插件部署调用栈内存中存在，部署成功/失败后都尝试 revoke；Vault、日志和 frontmatter 只保存 Worker URL 与受限 Publish Token。
 - Constraint: 个人部署由插件直接执行固定的账户检查、Worker/D1 创建、Worker 上传、D1 migration 和一次性初始化，不提供任意 Cloudflare API 代理；资源冲突不覆盖已有 Worker 或 D1，也不创建 R2。
+- Constraint: `plugin/manifest.json` 和 `plugin/main.js` 是插件发布源；根目录镜像、Release 暂存包和 Vault runtime 必须由同一同步流程生成，不能手工维护漂移副本。
+- Constraint: Obsidian Release 只允许 `main.js`、`manifest.json` 和可选 `styles.css`；`src/`、`server/`、`plugin/`、`plugin/compiler.js` 和测试文件不属于安装资产。
 - Constraint: 个人 D1-only 上传按 1 MB 分片，单个对象最大 20 MB；这是 D1 BLOB 2 MB 上限与 Workers Free 每次调用 D1 查询上限下的保守边界。
 - Compatibility requirement: `server/provisioner`、`wrangler.provisioner.jsonc` 和 provisioning D1 仅作为旧安装的兼容/高级运维代码，不得成为插件默认路径。
 - Compatibility requirement: `PublishBundle.formatVersion` 和 API `/v1` 在 MVP 内保持兼容；契约变更必须更新 fixture 和受影响工作包。
@@ -89,6 +93,9 @@ Compiler 不依赖 Obsidian UI 或 Cloudflare SDK；发布服务不解析 Markdo
 - Seam: Viewer → browser
   - Contract needed: C-004 Site URL and path mapping
   - Work packages affected: WP-003, WP-005
+- Seam: Plugin source → Obsidian distribution
+  - Contract needed: C-009 Obsidian plugin release artifacts
+  - Work packages affected: WP-004, WP-005
 
 ## Open decisions
 
@@ -96,4 +103,5 @@ Compiler 不依赖 Obsidian UI 或 Cloudflare SDK；发布服务不解析 Markdo
 - ADR-002: `.engineering/decisions/ADR-002-current-revision-only.md` — 只保留 current revision。
 - ADR-003: `.engineering/decisions/ADR-003-device-bootstrap-auth.md` — 设备授权和一次性 bootstrap secret。
 - ADR-004: `.engineering/decisions/ADR-004-quota-policy.md` — 50MB/10 Note 配额。
+- ADR-006: `.engineering/decisions/ADR-006-obsidian-release-artifacts.md` — 插件源文件、根目录镜像、Release 资产和 Vault runtime 的同步边界。
 - Pending: 官方生产域名、Cloudflare account、官方 D1/R2 bindings 与个人 D1-only 的真实 Obsidian/Worker smoke 仍需环境凭据；不阻塞本地实现和契约测试。

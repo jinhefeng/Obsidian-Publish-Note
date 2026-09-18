@@ -17,6 +17,7 @@ import type {
 export interface PublishStorage {
   getAccountByEmail(email: string): Promise<AccountRecord | undefined>;
   getAccount(accountId: string): Promise<AccountRecord | undefined>;
+  findProvisioningAccount(): Promise<AccountRecord | undefined>;
   createAccount(account: AccountRecord, recoveryCode: RecoveryCodeRecord): Promise<void>;
   deleteAccount(accountId: string): Promise<void>;
   updateAccountPassword(accountId: string, passwordHash: string): Promise<void>;

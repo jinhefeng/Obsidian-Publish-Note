@@ -8,7 +8,7 @@ This file records the durable project requirements that apply to future developm
 - Author: `Jin Hefeng`.
 - Obsidian plugin ID: `share-publisher`.
 - Keep the plugin ID and the Vault folder name `.obsidian/plugins/share-publisher/` stable for compatibility with existing installations.
-- Current plugin baseline: `0.2.16`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
+- Current plugin baseline: `0.2.23`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
 - Versioning feedback is mandatory: announce the new plugin version in the working-session commentary when starting a plugin update and repeat it in the final response. Never report a plugin update as complete without stating the version.
 - GitHub repository: [jinhefeng/Obsidian-Publish-Note](https://github.com/jinhefeng/Obsidian-Publish-Note).
 - Git remote: `origin` must point to `https://github.com/jinhefeng/Obsidian-Publish-Note.git`.
@@ -43,6 +43,24 @@ This file records the durable project requirements that apply to future developm
 - The local publishing service is an in-memory development service. Do not describe it as production hosting. The official hosted path may use Cloudflare Worker/R2/D1 and uses the official Publish Note control plane. Personal deployment runs directly from Obsidian desktop through Cloudflare OAuth/API and uses only Worker/D1 BLOB storage: it must not request, create, or require R2. Deploy Button, Wrangler, and manual `/setup` remain advanced fallbacks.
 - Use `start.sh` (or the `npm run dev:server`, `start`, `stop`, `restart`, `status`, and `logs` wrappers) for local service lifecycle management; every `start` must force-stop processes listening on the configured port and launch a fresh project service.
 - Do not change stable URL semantics without updating the compiler, publish service, tests, README files, and `Task Constitution.md` together.
+
+## Version and release synchronization
+
+- Treat `plugin/manifest.json` and `plugin/main.js` as the only hand-maintained plugin release sources. Do not edit generated copies in the repository root, the release staging directory, or the Obsidian Vault directly.
+- Every plugin version update must synchronize all of these artifacts from the `plugin/` sources:
+  - root `manifest.json` for the Obsidian Community directory;
+  - root `main.js` as the repository and manual-install mirror;
+  - `dist/obsidian-release/manifest.json` and `dist/obsidian-release/main.js` as the exact GitHub Release staging files;
+  - `Vault/.obsidian/plugins/share-publisher/manifest.json` and `Vault/.obsidian/plugins/share-publisher/main.js` for local smoke testing.
+- The synchronization workflow must build the plugin first, then generate the root mirrors and Release staging files, validate that their contents and versions match the `plugin/` sources, and only then sync the Vault. It must never copy `src/`, `server/`, `tests/`, `plugin/`, or `plugin/compiler.js` into the Release staging directory.
+- `plugin/compiler.js` is a development/reference file only. It is not a runtime dependency and must not be included in the root runtime mirror, the Obsidian installation directory, or GitHub Release assets.
+- Extend or preserve `npm run update:plugin` as the single local synchronization entry point. After changing `plugin/main.js` or `plugin/manifest.json`, run it before validation; if it does not regenerate every artifact listed above, the plugin update is incomplete.
+- Add or maintain a parity check in `npm run check:plugin` that fails when a generated root or Release artifact is missing, stale, has a different version, or differs from its `plugin/` source. A clean rebuild must produce no uncommitted generated-file diff.
+- Keep `package.json`'s version synchronized with `plugin/manifest.json`, unless a documented project decision explicitly states otherwise. The plugin manifest remains the release authority.
+- For user-facing copy changes, update `README.md`, `README.zh-CN.md`, `plugin/README.md`, and `plugin/README.zh-CN.md` separately; preserve each language switch and do not overwrite the more focused plugin README with the repository README.
+- For changes to stable URLs, publish contracts, storage, authentication, settings behavior, or release boundaries, update the relevant source, tests, README files, `.engineering/` documents, and `Task Constitution.md` in the same change.
+- GitHub Releases must use the exact `x.y.z` version from `plugin/manifest.json` as the tag, and must upload only the generated `main.js` and `manifest.json` assets (plus `styles.css` if one exists). Do not upload a source archive as a plugin asset.
+- Before announcing a release as complete, verify the generated artifact parity, run the required validation commands, inspect `git status`, commit and push the root manifest/runtime mirrors, and perform the required Obsidian smoke test.
 
 ## Git workflow
 

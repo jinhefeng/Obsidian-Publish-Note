@@ -12,6 +12,10 @@
 
 当前设置页提供 **部署到我的 Cloudflare**。官方 Publish Note 连接仍处于规划阶段，本版本不在设置页提供可操作入口；旧版官方服务字段仍可读取以保持兼容。如果要使用个人 Worker，请在 Obsidian 桌面版的 Cloudflare 区域点击 **部署到我的 Cloudflare**，然后授权公开的 Cloudflare OAuth 应用。插件会直接在你的账户中创建 Worker、D1 migration、内部账户和 Publish Token。个人内容保存在 D1 BLOB 分片中，不需要 R2 存储桶或订阅。Cloudflare access token 只在内存中使用并在部署后撤销；插件只保存 Worker 地址和受限的 Publish Token。个人部署不会要求填写邮箱、密码、恢复码或注册自己的 OAuth 客户端。
 
+个人部署会优先使用固定的 Worker 名称 `publish-note`，因此账户域名通常可预测，每篇笔记仍使用稳定的 `/s/{siteId}` 路径。如果该名称已被其他 Worker 占用，插件会使用基于账户的可预测后缀；已有的旧地址或带后缀地址仍然有效。
+
+点击**取消连接**后再次部署时，插件会检查同名模式的 D1，通过表结构识别 Publish Note，并复用历史数据库；同时原地更新并复用匹配的历史 Publish Note Worker，保持原来的域名，再为原个人账户重新签发 Token。如果 Worker 或 D1 缺失，只创建缺失的资源并绑定已找到的资源。多个历史数据库无法安全判断时会停止，避免内容分裂。
+
 在桌面版部署一次，再将本插件设置随 Vault 同步到手机。仅同步笔记不会同步连接。插件会自动加载同步后的配置，电脑和手机之后都可以直接发布和更新，无需再次授权，电脑关机也不影响手机发布。选用已保存的连接不会重新部署。Deploy Button、Wrangler 和 `/setup` 仍为高级备用方案。
 
 部署进度仅保存在当前设备内存中，不会覆盖已有可用连接。失败时显示具体阶段，设置页可展开脱敏技术详情；结果不明的写入不会自动重试。客户无需运行命令，也无需注册自己的 OAuth 客户端。
@@ -41,6 +45,10 @@
 4. 普通设置页不会暴露服务凭据。若要验证本地测试服务，请临时在插件数据中预置 `apiBaseUrl: "http://127.0.0.1:8787"`、`publishToken: "dev-token"`、`selfPublishToken: "dev-token"`、`deploymentWorkerUrl: "http://127.0.0.1:8787"`、`deploymentManaged: true` 和 `cloudflareMode: "self"`，然后打开 Markdown 笔记，从命令面板、功能区上传图标或笔记右键菜单选择 **Publish Note**。
 
 5. 发布链接会自动复制到剪贴板。根页面为 `index.html`，链接页面依次使用 `page-1.html`、`page-2.html` 等路径。页面和资源会先按分片上传，全部完成后才提交新版本。
+
+## 打包发布版本
+
+插件发布变更只修改 `plugin/manifest.json` 和 `plugin/main.js`。升级版本后执行 `npm run update:plugin`，该命令会重新构建内嵌 Worker、生成根目录运行时镜像、准备 `dist/obsidian-release/`、校验所有生成文件与插件源文件一致，并将最新运行时同步到开发 Vault。GitHub Release 只能包含生成的 `main.js` 和 `manifest.json` 附件；`compiler.js` 只是开发参考文件，不会进入发布包。
 
 ## 设置
 

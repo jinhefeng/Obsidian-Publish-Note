@@ -7,6 +7,7 @@
 - [x] 发布 API 的成功、错误、幂等和更新行为已记录。
 - [x] revision/current 指针和 current-only 语义已记录。
 - [x] 大发布包使用 C-005 protocol v2：页面 UTF-8 拼接、二进制 chunk 独立 base64 解码、最后原子提交；分片/提交失败不会切换旧 revision。
+- [x] C-009 发布产物契约已冻结：`plugin/` 源文件生成根目录镜像、Release 暂存包和 Vault runtime，版本与内容必须一致。
 
 ## Work-package gate
 
@@ -16,6 +17,7 @@
 - [x] WP-CF-2 D1 migration、官方 R2 key layout 和个人 D1-only BLOB adapter 已实现。
 - [ ] 真实官方 Cloudflare Worker/D1/R2 与个人 Worker/D1-only 工作包需要账号、域名和部署凭据。
 - [x] 当前工作包之间没有未解决的写入冲突。
+- [x] 根目录 `manifest.json`、`main.js` 和 MIT `LICENSE` 已生成/存在；Release 暂存包只包含允许的插件资产。
 
 ## Migration and compatibility gate
 
@@ -50,7 +52,9 @@
 - [ ] 公开 OAuth Client ID 注入正式插件构建、Cloudflare API 资源创建和桌面端真实部署待 staging 凭据。
 - [ ] `wrangler dev` + 本地 D1-only 模拟待安装 Wrangler 后执行；官方 R2 binding smoke 单独执行。
 - [x] Obsidian Plugin 已接入本地测试服务。
-- [x] 本地插件 artifact 包含 `manifest.json`、`main.js` 和 compiler runtime。
+- [x] 本地插件 artifact 包含自包含的 `manifest.json` 和 `main.js` runtime；`compiler.js` 仅保留为开发参考，不进入安装包。
+- [x] `npm run update:plugin` 已验证会重新构建、生成根目录镜像、准备 Release 暂存包、运行 parity check 并同步 Vault。
+- [x] GitHub Actions 已加入 main/tag 校验；tag 必须匹配 manifest 版本，Release 仅上传生成的插件资产。
 - [x] 真实 Obsidian vault 中的加载、当前笔记首发/更新和 frontmatter 回写已验证。
 
 ## Regression and recovery gate

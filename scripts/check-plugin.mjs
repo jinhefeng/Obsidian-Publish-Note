@@ -1,9 +1,49 @@
 import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
-const manifest = JSON.parse(await readFile(new URL("../plugin/manifest.json", import.meta.url), "utf8"));
-const main = await readFile(new URL("../plugin/main.js", import.meta.url), "utf8");
-const compiler = await readFile(new URL("../plugin/compiler.js", import.meta.url), "utf8");
+const sourceDirectory = new URL("../plugin/", import.meta.url);
+const manifestUrl = new URL("manifest.json", sourceDirectory);
+const mainUrl = new URL("main.js", sourceDirectory);
+const manifestText = await readFile(manifestUrl, "utf8");
+const manifest = JSON.parse(manifestText);
+const main = await readFile(mainUrl, "utf8");
+const compiler = await readFile(new URL("compiler.js", sourceDirectory), "utf8");
+const rootDirectory = new URL("../", import.meta.url);
+const rootManifestText = await readFile(new URL("manifest.json", rootDirectory), "utf8");
+const rootMain = await readFile(new URL("main.js", rootDirectory), "utf8");
+const releaseDirectory = new URL("../dist/obsidian-release/", import.meta.url);
+const releaseFiles = (await readdir(releaseDirectory)).sort();
+const releaseManifestText = await readFile(new URL("manifest.json", releaseDirectory), "utf8");
+const releaseMain = await readFile(new URL("main.js", releaseDirectory), "utf8");
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const sourceFiles = await readdir(sourceDirectory);
+const rootFiles = await readdir(rootDirectory);
+const hasStyles = sourceFiles.includes("styles.css");
+const expectedReleaseFiles = ["main.js", "manifest.json", ...(hasStyles ? ["styles.css"] : [])].sort();
+
+if (rootManifestText !== manifestText || releaseManifestText !== manifestText) {
+  throw new Error("Generated manifest mirrors are stale; run npm run package:plugin");
+}
+if (rootMain !== main || releaseMain !== main) {
+  throw new Error("Generated main.js mirrors are stale; run npm run package:plugin");
+}
+if (packageJson.version !== manifest.version) {
+  throw new Error("package.json version does not match plugin/manifest.json");
+}
+if (rootFiles.includes("styles.css") !== hasStyles) {
+  throw new Error("Root styles.css mirror does not match plugin/styles.css");
+}
+if (hasStyles) {
+  const sourceStyles = await readFile(new URL("styles.css", sourceDirectory), "utf8");
+  const rootStyles = await readFile(new URL("styles.css", rootDirectory), "utf8");
+  const releaseStyles = await readFile(new URL("styles.css", releaseDirectory), "utf8");
+  if (sourceStyles !== rootStyles || sourceStyles !== releaseStyles) {
+    throw new Error("Generated styles.css mirrors are stale; run npm run package:plugin");
+  }
+}
+if (releaseFiles.join("\0") !== expectedReleaseFiles.join("\0")) {
+  throw new Error(`Release staging must contain only ${expectedReleaseFiles.join(", ")}`);
+}
 
 if (!manifest.id || !manifest.name || !manifest.version || !manifest.minAppVersion) {
   throw new Error("Plugin manifest is missing a required field");

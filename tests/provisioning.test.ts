@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { CloudflareRestApi } from "../server/provisioner/cloudflare-api.ts";
 import { MemoryProvisioningStorage } from "../server/provisioner/memory-storage.ts";
-import { ProvisioningService } from "../server/provisioner/service.ts";
+import { ProvisioningService, chooseNames } from "../server/provisioner/service.ts";
 import { routeProvisioningRequest } from "../server/provisioner/routes.ts";
 
 class FakeCloudflare {
@@ -69,6 +69,17 @@ test("Cloudflare provisioning completes OAuth, resource creation, target initial
   const storedJob = storage.jobs.get(started.jobId);
   assert.equal(storedJob?.accessTokenCiphertext, undefined);
   assert.equal(storedJob?.resultCiphertext, undefined);
+});
+
+test("legacy provisioning keeps the Worker hostname stable when only another namespace is occupied", () => {
+  assert.deepEqual(
+    chooseNames("publish-note", "account-12345678", ["publish-note"], [], []),
+    { worker: "publish-note", d1: "publish-note-account", r2: "publish-note-content" },
+  );
+  assert.deepEqual(
+    chooseNames("publish-note", "account-12345678", [], [], ["publish-note"]),
+    { worker: "publish-note-account", d1: "publish-note", r2: "publish-note-content" },
+  );
 });
 
 test("invalid OAuth state and repeated provisioning for an installed account fail safely without overwriting resources", async () => {

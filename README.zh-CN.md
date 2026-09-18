@@ -12,6 +12,7 @@
 - 外部 URL、`mailto:` 链接、锚点和外部资源保持原样，不加入引用页面队列。
 - 优先使用 Obsidian 原生渲染，不可用时自动回退到确定性渲染器。
 - 发布链接会自动复制到剪贴板；发布成功后，根笔记的 frontmatter 会保存 `share_site_id`、`share_link` 和 `share_updated`，后续更新可以继续使用同一个站点。
+- 个人部署会优先使用固定的 Worker 名称 `publish-note`，因此账户域名通常可预测；只有该名称已被占用时才使用可预测的后缀。
 - 可选的**调试模式**会在设置页记录脱敏后的部署和发布请求/响应详情。日志不会记录 Token、请求正文或笔记内容，并支持一键复制排查。
 
 ## 验证
@@ -24,6 +25,10 @@ npm run check:plugin
 npm run check:worker
 ```
 
+## 插件打包
+
+维护者只应修改 `plugin/manifest.json` 和 `plugin/main.js` 作为插件发布源文件。每次版本或运行时发生变化后执行 `npm run update:plugin`。该命令会重新构建内嵌 Worker、生成根目录的 `manifest.json` 和 `main.js` 镜像、准备 `dist/obsidian-release/`、校验文件一致性，并将运行时文件同步到开发 Vault。创建 GitHub Release 时，只上传发布暂存目录中生成的 `main.js` 和 `manifest.json`；`src/`、`server/`、`plugin/` 和 `plugin/compiler.js` 都不是插件安装文件。
+
 ## Cloudflare 发布
 
 Publish Note 通过 Cloudflare Worker 的 `/s/{siteId}/` 提供网页访问。当前支持的个人路径在你自己的 Cloudflare 账户中使用 Worker 和 D1；当前内容以 D1 BLOB 分片保存，不会创建或要求 R2。规划中的官方托管路径可以使用 Worker、R2 和 D1。每个账户最多保存 50 MB 当前内容，最多发布 10 篇 Note。
@@ -33,6 +38,10 @@ Publish Note 通过 Cloudflare Worker 的 `/s/{siteId}/` 提供网页访问。�
 如果要停止此 Vault 使用该连接，可以在设置中点击**取消连接**。这只会删除 Vault 保存的 Worker 地址和 Publish Token，不会删除 Cloudflare 资源、已发布网站或其他设备上的连接。
 
 首选的个人部署流程从 Obsidian 桌面版设置页开始。点击 **部署到我的 Cloudflare**，在 Cloudflare 中授权公开的 Publish Note OAuth 应用，然后由插件直接在你的账户中创建并初始化私有 Worker 和 D1 数据库。插件会在部署时创建内部账户和受限的 Publish Token，不会要求用户填写邮箱、密码或注册自己的 OAuth 客户端。内容以 D1 BLOB 分片保存，不会创建 R2 存储桶，也不需要订阅 R2。Cloudflare access token 只在插件内存中使用，部署完成后会撤销；插件只保存 Worker 地址和受限的 Publish Token。
+
+个人部署会优先使用固定的 Worker 名称 `publish-note`，因此同一个 Cloudflare 账户的域名通常保持不变；每篇笔记仍使用稳定的 `/s/{siteId}` 路径。如果该名称已被其他 Worker 占用，Publish Note 会使用基于账户的可预测后缀；已有的旧地址或带后缀地址仍然有效，不会被静默改名。
+
+在点击**取消连接**后重新部署时，插件会检查同名模式的 D1 数据库，并通过表结构确认是否为历史 Publish Note；确认后会复用原数据库，并原地更新、复用对应的历史 Publish Note Worker，因此原来的域名保持不变，再为原个人账户重新签发 Token。如果 Worker 或 D1 缺失，插件只创建缺失的资源，并绑定到已经找到的资源。多个历史数据库无法安全判断时仍会停止，避免内容分裂。
 
 D1-only 保留笔记、引用页面、图片以及部署后移动端发布的正常体验。单个文件上限为 20 MB，内容按 1 MB 分片，以符合 D1 与 Workers Free 的单次请求限制。Free 计划的 D1 限制是硬限制，不会自动产生超额收费；请参阅 Cloudflare 的 [D1 定价](https://developers.cloudflare.com/d1/platform/pricing/) 和 [D1 限制](https://developers.cloudflare.com/d1/platform/limits/)。
 

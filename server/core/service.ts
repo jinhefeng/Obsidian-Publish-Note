@@ -217,6 +217,21 @@ export class PublishService {
     return { accountId: result.account.id, publishToken: issued.token };
   }
 
+  async reconnectProvisioning(input: { provisionSecret: string; ownerKey: string; expiresAt: string; signature: string; tokenName?: string }): Promise<{ accountId: string; publishToken: string }> {
+    const expiresAt = Date.parse(String(input.expiresAt || ""));
+    if (!this.bootstrapSecret || input.provisionSecret !== this.bootstrapSecret || !await this.storage.isBootstrapConsumed() || !Number.isFinite(expiresAt) || expiresAt <= this.now().getTime() || expiresAt > this.now().getTime() + 10 * 60 * 1000) {
+      throw new ServiceError(403, "FORBIDDEN", "Reconnection is unavailable");
+    }
+    const ownerKey = String(input.ownerKey || "").trim();
+    if (!ownerKey || !input.signature || !constantTimeEqual(await hmacSha256(this.bootstrapSecret, `${ownerKey}\n${input.expiresAt}`), String(input.signature))) {
+      throw new ServiceError(403, "FORBIDDEN", "Reconnection is unavailable");
+    }
+    const account = await this.storage.findProvisioningAccount();
+    if (!account) throw new ServiceError(404, "NOT_FOUND", "Reconnection account is unavailable");
+    const issued = await this.createToken(account.id, input.tokenName || "Obsidian plugin");
+    return { accountId: account.id, publishToken: issued.token };
+  }
+
   async startUpload(context: AuthContext, input: {
     siteId?: string; idempotencyKey: string; formatVersion: 1; chunkProtocolVersion: 2; sourcePath: string; title: string; chunkCount: number; objectCount: number; totalBytes: number;
   }): Promise<{ uploadId: string; siteId: string; revision: number }> {

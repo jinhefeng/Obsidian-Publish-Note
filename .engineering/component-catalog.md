@@ -18,6 +18,7 @@
 | CMP-014 | Legacy Provisioning Control Plane | T3 | legacy plugin/service | `/v1/cloudflare/provision/start|poll|ack`, `/oauth/cloudflare/callback` | implemented locally / deprecated | retain | 仅为旧版已部署实例和兼容窗口保留；不得出现在新插件默认流程、README 或验收路径 |
 | CMP-015 | Target Worker automated initialization | T3/T4 | Personal Desktop Provisioner, legacy control plane | `POST /__internal/provision/initialize` | implemented locally | extend | 一次性 secret + 10 分钟 HMAC claim 创建单用户空间和 Publish Token；初始化后失效；新主链路由桌面插件直接调用 |
 | CMP-016 | Personal Desktop Cloudflare Provisioner | T4 | Obsidian desktop plugin | Authorization Code + PKCE, loopback callback, Cloudflare REST API, embedded Worker/migration | implemented locally / remote pending | create | 唯一账户检查、Worker/D1 冲突保护、固定 D1-only 资源流程、bootstrap 初始化、失败清理和 OAuth revoke；不申请 R2 scope，access token 只在内存中存在 |
+| CMP-017 | Obsidian Distribution and Release Packaging | T5 | Obsidian Community directory, GitHub Release, local Vault | `npm run update:plugin`, root mirrors, `dist/obsidian-release/`, parity check | implemented locally / remote pending | create | `plugin/manifest.json` 和 `plugin/main.js` 是唯一源；生成根目录镜像、精确 Release assets 和 Vault runtime；`compiler.js` 仅为开发参考 |
 
 ## Reuse decisions
 
@@ -25,6 +26,7 @@
 - 编译器、发布服务和存储适配器分别拥有不同生命周期，因此不抽取为一个“大而全”的共享模块。
 - `src/compiler/markdown-renderer.ts` 是根笔记/引用页面编译共享的纯渲染核心；`site-compiler.ts` 负责 bundle 组装、页面路径和导航。
 - `plugin/main.js` 当前保持自包含，避免 Obsidian 对本地 sibling runtime 的加载差异；`plugin/compiler.js` 作为可读参考，二者必须通过同一组 fixtures 校验。两者都使用 `compileShare`，不再提供文件夹分享入口。
+- CMP-017 复用 `plugin/` 的自包含 runtime，不把编译器、服务端或源码目录复制进 Obsidian Release；根目录镜像和 Release 暂存包由同步脚本生成，CI 负责拒绝漂移。
 - 内存存储不是生产组件，而是 C-003 的验证替身；它的接口刻意与官方 R2/D1 和个人 D1-only 适配器一致，减少集成风险。
 - 原生渲染是插件内的运行时能力，不改变 C-001；其输出仍需包装成 `PublishBundle`，并将动态行为按快照处理。
 - 官方托管与自部署不复制发布业务逻辑：官方路径增加控制面做账户/设备/Token/配额/租户管理，个人路径由 CMP-016 在桌面端直接创建并初始化独立 Worker；两者仍共享 Worker-compatible core。

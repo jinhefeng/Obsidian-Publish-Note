@@ -6,7 +6,7 @@ import test from "node:test";
 
 const pluginSource = readFileSync(new URL("../plugin/main.js", import.meta.url), "utf8");
 
-function loadPlugin({ desktop = true, fetchImpl, requestImpl, openExternal, electronOpenExternal }: { desktop?: boolean; fetchImpl?: typeof fetch; requestImpl?: (request: any) => Promise<any>; openExternal?: (url: string) => void; electronOpenExternal?: (url: string) => void } = {}) {
+function loadPlugin({ desktop = true, fetchImpl, requestImpl, openExternal, electronOpenExternal, windowValue }: { desktop?: boolean; fetchImpl?: typeof fetch; requestImpl?: (request: any) => Promise<any>; openExternal?: (url: string) => void; electronOpenExternal?: (url: string) => void; windowValue?: any } = {}) {
   const pluginModule = { exports: {} as any };
   const notices: string[] = [];
   const dependencies: string[] = [];
@@ -54,6 +54,7 @@ function loadPlugin({ desktop = true, fetchImpl, requestImpl, openExternal, elec
     Response: globalThis.Response,
     URL,
     URLSearchParams,
+    window: windowValue,
     TextEncoder,
     Uint8Array,
     btoa,
@@ -216,7 +217,120 @@ test("personal resource names avoid every existing Worker and D1 name", () => {
     ["publish-note", "publish-note-account", "publish-note-account-2"],
     ["publish-note-account", "publish-note-account-2"],
   );
-  assert.deepEqual(JSON.parse(JSON.stringify(names)), { worker: "publish-note-account-3", d1: "publish-note-account-3" });
+  assert.deepEqual(JSON.parse(JSON.stringify(names)), { worker: "publish-note", d1: "publish-note-account-3" });
+
+  const workerCollision = __testing.choosePersonalCloudflareNames("account-12345678", [], ["publish-note"]);
+  assert.deepEqual(JSON.parse(JSON.stringify(workerCollision)), { worker: "publish-note-account", d1: "publish-note" });
+});
+
+test("personal deployment reuses a recognized historical Publish Note D1 and reconnects its account", async () => {
+  const calls: string[] = [];
+  const requiredTables = [
+    "accounts", "recovery_codes", "sessions", "tokens", "sites", "revisions", "objects", "object_chunks",
+    "uploads", "upload_objects", "upload_chunks", "device_authorizations", "bootstrap_state",
+  ];
+  const fakeFetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const url = String(input);
+    const method = init.method || "GET";
+    const parsed = new URL(url);
+    const path = parsed.pathname;
+    calls.push(`${method} ${path}`);
+    if (path.endsWith("/accounts")) return jsonResponse([{ id: "account-12345678", name: "Personal" }]);
+    if (path.endsWith("/d1/database") && method === "GET") return jsonResponse([{ uuid: "historical-db", name: "publish-note-417f3533" }]);
+    if (path.endsWith("/workers/scripts") && method === "GET") return jsonResponse([{ id: "publish-note-417f3533" }]);
+    if (path.endsWith("/d1/database/historical-db/query") && method === "POST") {
+      const sql = JSON.parse(String(init.body || "{}")).sql || "";
+      if (sql.includes("sqlite_master")) return jsonResponse([{ success: true, results: requiredTables.map((name) => ({ name })) }]);
+      if (sql.includes("PRAGMA table_info")) return jsonResponse([{ success: true, results: [{ name: "data" }] }]);
+      return jsonResponse([{ success: true }]);
+    }
+    if (path.endsWith("/workers/subdomain") && method === "GET") return jsonResponse({ subdomain: "personal-example" });
+    if (path.endsWith("/subdomain") && method === "POST") return jsonResponse({ enabled: true });
+    if (path.includes("/workers/scripts/") && method === "PUT") {
+      const form = await new Response(init.body, { headers: init.headers }).formData();
+      const metadata = JSON.parse(String(form.get("metadata")));
+      assert.equal(metadata.bindings.find((binding: any) => binding.name === "DB").id, "historical-db");
+      return jsonResponse({});
+    }
+    if (path === "/healthz") return new Response(JSON.stringify({ status: "ok", service: "publish-note" }));
+    if (path === "/__internal/provision/reconnect") return new Response(JSON.stringify({ accountId: "historical-account", publishToken: "pn_reconnected" }), { status: 200 });
+    if (path.endsWith("/secrets/BOOTSTRAP_SECRET") && method === "DELETE") return jsonResponse({});
+    throw new Error(`Unexpected Cloudflare request: ${method} ${url}`);
+  };
+  const { PluginClass } = loadPlugin({ fetchImpl: fakeFetch });
+  const result = await PluginClass.__testing.provisionPersonalCloudflare("test-token");
+  assert.equal(result.serviceUrl, "https://publish-note-417f3533.personal-example.workers.dev");
+  assert.equal(result.publishToken, "pn_reconnected");
+  assert.equal(calls.some((call) => call === "POST /client/v4/accounts/account-12345678/d1/database"), false);
+  assert.ok(calls.includes("POST /client/v4/accounts/account-12345678/d1/database/historical-db/query"));
+  assert.ok(calls.includes("PUT /client/v4/accounts/account-12345678/workers/scripts/publish-note-417f3533"));
+  assert.ok(calls.includes("DELETE /client/v4/accounts/account-12345678/workers/scripts/publish-note-417f3533/secrets/BOOTSTRAP_SECRET"));
+  assert.equal(calls.some((call) => call === "DELETE /client/v4/accounts/account-12345678/workers/scripts/publish-note-417f3533"), false);
+  assert.ok(calls.includes("POST /__internal/provision/reconnect"));
+});
+
+test("personal deployment creates only the missing resource when a Worker or D1 is absent", async () => {
+  const requiredTables = [
+    "accounts", "recovery_codes", "sessions", "tokens", "sites", "revisions", "objects", "object_chunks",
+    "uploads", "upload_objects", "upload_chunks", "device_authorizations", "bootstrap_state",
+  ];
+  const scenarios = [
+    {
+      name: "missing Worker",
+      databases: [{ uuid: "historical-db", name: "publish-note-417f3533" }],
+      workers: [],
+      expectedWorker: "publish-note-417f3533",
+      expectedDatabase: "historical-db",
+      initPath: "/__internal/provision/reconnect",
+    },
+    {
+      name: "missing D1",
+      databases: [],
+      workers: [{ id: "publish-note" }],
+      expectedWorker: "publish-note",
+      expectedDatabase: "created-db",
+      initPath: "/__internal/provision/initialize",
+    },
+  ];
+  for (const scenario of scenarios) {
+    const calls: string[] = [];
+    const fakeFetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = init.method || "GET";
+      const path = new URL(url).pathname;
+      calls.push(`${method} ${path}`);
+      if (path.endsWith("/accounts")) return jsonResponse([{ id: "account-12345678", name: "Personal" }]);
+      if (path.endsWith("/d1/database") && method === "GET") return jsonResponse(scenario.databases);
+      if (path.endsWith("/d1/database") && method === "POST") return jsonResponse({ uuid: "created-db" });
+      if (path.endsWith("/workers/scripts") && method === "GET") return jsonResponse(scenario.workers);
+      if (path.endsWith("/d1/database/historical-db/query") && method === "POST") {
+        const sql = JSON.parse(String(init.body || "{}")).sql || "";
+        if (sql.includes("sqlite_master")) return jsonResponse([{ success: true, results: requiredTables.map((name) => ({ name })) }]);
+        if (sql.includes("PRAGMA table_info")) return jsonResponse([{ success: true, results: [{ name: "data" }] }]);
+        return jsonResponse([{ success: true }]);
+      }
+      if (path.includes("/d1/database/") && path.endsWith("/query") && method === "POST") return jsonResponse([{ success: true }]);
+      if (path.endsWith("/workers/subdomain") && method === "GET") return jsonResponse({ subdomain: "personal-example" });
+      if (path.endsWith("/subdomain") && method === "POST") return jsonResponse({ enabled: true });
+      if (path.includes("/workers/scripts/") && method === "PUT") {
+        assert.equal(path.endsWith(`/workers/scripts/${scenario.expectedWorker}`), true, scenario.name);
+        const form = await new Response(init.body, { headers: init.headers }).formData();
+        const metadata = JSON.parse(String(form.get("metadata")));
+        assert.equal(metadata.bindings.find((binding: any) => binding.name === "DB").id, scenario.expectedDatabase, scenario.name);
+        return jsonResponse({});
+      }
+      if (path === "/healthz") return new Response(JSON.stringify({ status: "ok", service: "publish-note" }));
+      if (path === scenario.initPath) return new Response(JSON.stringify({ accountId: "target-account", publishToken: "pn_personal_token" }), { status: 201 });
+      if (path.endsWith("/secrets/BOOTSTRAP_SECRET") && method === "DELETE") return jsonResponse({});
+      throw new Error(`Unexpected Cloudflare request: ${method} ${url}`);
+    };
+    const { PluginClass } = loadPlugin({ fetchImpl: fakeFetch });
+    const result = await PluginClass.__testing.provisionPersonalCloudflare("test-token");
+    assert.equal(result.serviceUrl, `https://${scenario.expectedWorker}.personal-example.workers.dev`, scenario.name);
+    assert.equal(calls.includes("POST /client/v4/accounts/account-12345678/d1/database"), scenario.name === "missing D1", scenario.name);
+    assert.ok(calls.includes(`PUT /client/v4/accounts/account-12345678/workers/scripts/${scenario.expectedWorker}`), scenario.name);
+    assert.ok(calls.includes(scenario.initPath === "/__internal/provision/reconnect" ? "POST /__internal/provision/reconnect" : "POST /__internal/provision/initialize"), scenario.name);
+  }
 });
 
 test("native renderer stylesheet uses the binary asset protocol", () => {
@@ -628,6 +742,27 @@ test("settings changes merge with synchronized connections instead of overwritin
   assert.equal(plugin.data.deploymentWorkerUrl, "https://new.test");
   assert.equal(plugin.data.language, "en");
   assert.doesNotMatch(JSON.stringify(plugin.data), /provisioning|authorizing/);
+});
+
+test("disconnecting stays local, avoids native confirmation, and leaves settings refresh to the view", async () => {
+  let confirmationCalls = 0;
+  const { PluginClass } = loadPlugin({
+    desktop: false,
+    windowValue: { confirm: () => { confirmationCalls += 1; return false; } },
+  });
+  const plugin = new PluginClass({});
+  plugin.data = personalSettings;
+  await plugin.loadSettings();
+  let refreshCalls = 0;
+  plugin.refreshSettingTab = () => { refreshCalls += 1; };
+
+  assert.equal(await plugin.disconnectCloudflare(), true);
+  assert.equal(confirmationCalls, 0);
+  assert.equal(refreshCalls, 0);
+  assert.equal(plugin.settings.selfPublishToken, "");
+  assert.equal(plugin.settings.deploymentWorkerUrl, "");
+  assert.equal(plugin.settings.connectionStatus, "disconnected");
+  assert.equal(plugin.settings.deploymentStatus, "not_deployed");
 });
 
 test("publishing pins one connection across concurrent sync and does not call Cloudflare OAuth", async () => {

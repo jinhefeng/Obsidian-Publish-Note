@@ -21,6 +21,7 @@ export class CloudflareD1R2Storage implements PublishStorage {
 
   async getAccountByEmail(email: string) { return this.account(await this.db.prepare("SELECT * FROM accounts WHERE email = ?1").bind(email).first()); }
   async getAccount(accountId: string) { return this.account(await this.db.prepare("SELECT * FROM accounts WHERE id = ?1").bind(accountId).first()); }
+  async findProvisioningAccount() { return this.account(await this.db.prepare("SELECT * FROM accounts WHERE email LIKE ?1 ORDER BY created_at ASC LIMIT 1").bind("%@selfhosted.publish-note.invalid").first()); }
   async createAccount(account: AccountRecord, recoveryCode: RecoveryCodeRecord) { await this.db.batch([
     this.db.prepare("INSERT INTO accounts(id,email,password_hash,created_at) VALUES (?1,?2,?3,?4)").bind(account.id, account.email, account.passwordHash, account.createdAt),
     this.db.prepare("INSERT INTO recovery_codes(id,account_id,code_hash,created_at) VALUES (?1,?2,?3,?4)").bind(recoveryCode.id, recoveryCode.accountId, recoveryCode.codeHash, recoveryCode.createdAt),

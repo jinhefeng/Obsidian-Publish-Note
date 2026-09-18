@@ -89,6 +89,19 @@ test("automated Worker provisioning initialization requires a short-lived signed
   await assert.rejects(() => service.initializeProvisioning({ provisionSecret: "bootstrap-secret", ownerKey: "job-456", expiresAt, signature }), (error) => error instanceof ServiceError && error.status === 403);
 });
 
+test("Worker reconnection reuses the historical personal account after bootstrap is consumed", async () => {
+  const storage = new MemoryStorage();
+  const service = new PublishService({ storage, publicBaseUrl: "https://worker.example.com", bootstrapSecret: "bootstrap-secret" });
+  const firstExpiresAt = new Date(Date.now() + 60_000).toISOString();
+  const firstSignature = await hmacSha256("bootstrap-secret", `job-123\n${firstExpiresAt}`);
+  const initialized = await service.initializeProvisioning({ provisionSecret: "bootstrap-secret", ownerKey: "job-123", expiresAt: firstExpiresAt, signature: firstSignature });
+  const reconnectExpiresAt = new Date(Date.now() + 60_000).toISOString();
+  const reconnectSignature = await hmacSha256("bootstrap-secret", `job-reconnect\n${reconnectExpiresAt}`);
+  const reconnected = await service.reconnectProvisioning({ provisionSecret: "bootstrap-secret", ownerKey: "job-reconnect", expiresAt: reconnectExpiresAt, signature: reconnectSignature });
+  assert.equal(reconnected.accountId, (await service.authenticatePublishToken(initialized.publishToken)).account.id);
+  assert.match(reconnected.publishToken, /^pn_/);
+});
+
 test("Worker provisioning initialization returns JSON errors instead of an HTML error page", async () => {
   const service = new PublishService({ storage: new MemoryStorage(), publicBaseUrl: "https://worker.example.com", bootstrapSecret: "bootstrap-secret" });
   const response = await routeRequest({

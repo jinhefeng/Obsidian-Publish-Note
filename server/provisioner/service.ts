@@ -201,10 +201,23 @@ export class ProvisioningService {
 
 }
 
-function chooseNames(prefix: string, accountId: string, d1Names: string[], r2Names: string[], workerNames: string[]) {
-  const occupied = new Set([...d1Names, ...r2Names, ...workerNames]);
-  const base = { worker: prefix, d1: prefix, r2: `${prefix}-content` };
-  if (![base.worker, base.d1, base.r2].some((name) => occupied.has(name))) return base;
-  const suffix = accountId.slice(0, 8).toLowerCase();
-  return { worker: `${prefix}-${suffix}`, d1: `${prefix}-${suffix}`, r2: `${prefix}-${suffix}-content` };
+export function chooseNames(prefix: string, accountId: string, d1Names: string[], r2Names: string[], workerNames: string[]) {
+  return {
+    // These are separate Cloudflare namespaces. An occupied D1 name should
+    // not force a different Worker hostname.
+    worker: chooseResourceName(prefix, accountId, workerNames),
+    d1: chooseResourceName(prefix, accountId, d1Names),
+    r2: chooseResourceName(`${prefix}-content`, accountId, r2Names),
+  };
+}
+
+function chooseResourceName(prefix: string, accountId: string, occupiedNames: string[]) {
+  const occupied = new Set(occupiedNames);
+  const accountSuffix = String(accountId || "account").replace(/[^A-Za-z0-9-]/g, "").slice(0, 8).replace(/^-+|-+$/g, "").toLowerCase() || "account";
+  for (let index = 0; index < 100; index += 1) {
+    const suffix = index === 0 ? "" : `-${accountSuffix}${index === 1 ? "" : `-${index}`}`;
+    const name = `${prefix}${suffix}`;
+    if (!occupied.has(name)) return name;
+  }
+  throw new ProvisioningError("RESOURCE_NAME_UNAVAILABLE", "Could not find an available Cloudflare resource name", 409);
 }

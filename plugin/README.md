@@ -12,6 +12,10 @@ To stop using the connection in this Vault, click **Disconnect from my Cloudflar
 
 The current settings page provides **Deploy to my Cloudflare**. The official Publish Note connection is planned and is not an active settings action in this release; legacy official-service fields remain readable for compatibility. For a personal Worker, click **Deploy to my Cloudflare** on Obsidian desktop and authorize the public Cloudflare OAuth application. The plugin then creates the Worker, D1 migration, first internal account, and Publish Token directly in your account. Personal content is stored in D1 BLOB chunks, so no R2 bucket or subscription is needed. The Cloudflare access token is used in memory only and revoked after deployment; only the Worker URL and scoped Publish Token are saved. The direct setup does not ask for an email, password, recovery code, or a user-provided OAuth client.
 
+Personal deployment prefers the stable Worker name `publish-note`, so the account hostname normally stays predictable while each note keeps its stable `/s/{siteId}` path. If another Worker already uses that name, a deterministic account-based suffix is used; existing older or suffixed URLs remain valid.
+
+After **Disconnect**, a later deployment inspects same-pattern D1 databases, recognizes the Publish Note schema, and reuses the historical database. It also updates the matching historical Publish Note Worker in place, preserving its hostname, then issues a new token for the existing personal account. If either resource is missing, only the missing Worker or D1 is created and bound to the resource that was found. Ambiguous historical databases stop deployment instead of splitting content.
+
 Deploy once on desktop, then include this plugin's settings when syncing your Vault to your phone. Syncing only notes does not transfer the connection. Synced settings load automatically; desktop and mobile can publish and update without another Cloudflare authorization, even with the desktop computer off. Selecting a saved connection never deploys again. Deploy Button, Wrangler, and `/setup` remain advanced fallbacks.
 
 Deployment progress is local to the running device and does not overwrite a usable connection. Failed setup reports its stage, with sanitized technical details available in settings. Unconfirmed writes are not automatically repeated. Customers do not need commands or their own OAuth client.
@@ -41,6 +45,10 @@ The direct personal setup does not expose the service's account registration or 
 4. The normal settings page does not expose service credentials. For a local backend smoke test, temporarily seed the plugin data with `apiBaseUrl: "http://127.0.0.1:8787"`, `publishToken: "dev-token"`, `selfPublishToken: "dev-token"`, `deploymentWorkerUrl: "http://127.0.0.1:8787"`, `deploymentManaged: true`, and `cloudflareMode: "self"`, then open a Markdown note and choose **Publish Note** from the command palette, ribbon upload icon, or note context menu.
 
 5. The published URL is copied automatically. The root page is `index.html`; linked pages use `page-1.html`, `page-2.html`, and so on. Pages and assets upload in chunks before the new revision is committed.
+
+## Packaging a release
+
+Edit only `plugin/manifest.json` and `plugin/main.js` for plugin release changes. After bumping the version, run `npm run update:plugin`. It rebuilds the embedded Worker artifact, generates the root runtime mirrors, prepares `dist/obsidian-release/`, validates that all generated files match the plugin sources, and syncs the latest runtime into the development Vault. A GitHub Release must contain only the generated `main.js` and `manifest.json` assets; `compiler.js` is a development reference and is not included.
 
 ## Settings
 

@@ -22,6 +22,7 @@ export async function routeRequest(context: WorkerContext): Promise<Response> {
     if (url.pathname === "/connect" && request.method === "GET") return await connectPage(context);
     if (url.pathname === "/connect/approve" && request.method === "POST") return await approveConnect(context);
     if (url.pathname === "/__internal/provision/initialize" && request.method === "POST") return await initializeProvisioning(context);
+    if (url.pathname === "/__internal/provision/reconnect" && request.method === "POST") return await reconnectProvisioning(context);
     if (url.pathname === "/setup") return await setupPage(context);
     if (url.pathname === "/login") return await loginPage(context);
     if (url.pathname === "/register") return await registerPage(context);
@@ -31,7 +32,7 @@ export async function routeRequest(context: WorkerContext): Promise<Response> {
     if (url.pathname.startsWith("/v1/")) return await apiRequest(context);
     return new Response("Not Found", { status: 404 });
   } catch (error) {
-    if (url.pathname.startsWith("/v1/") || url.pathname === "/healthz" || url.pathname === "/__internal/provision/initialize") return jsonError(error);
+    if (url.pathname.startsWith("/v1/") || url.pathname === "/healthz" || url.pathname === "/__internal/provision/initialize" || url.pathname === "/__internal/provision/reconnect") return jsonError(error);
     const normalized = asServiceError(error);
     return new Response(page("Error", `<h1>Request failed</h1><p>${escapeHtml(normalized.message)}</p>`), { status: normalized.status, headers: { "content-type": "text/html; charset=utf-8" } });
   }
@@ -48,6 +49,19 @@ async function initializeProvisioning(context: WorkerContext): Promise<Response>
     tokenName: String(input.tokenName || "Obsidian plugin"),
   });
   return json(result, 201);
+}
+
+async function reconnectProvisioning(context: WorkerContext): Promise<Response> {
+  const input = await readJson(context.request);
+  const secret = context.request.headers.get("x-publish-note-bootstrap-secret") || "";
+  const result = await context.service.reconnectProvisioning({
+    provisionSecret: secret,
+    ownerKey: String(input.ownerKey || context.request.headers.get("x-publish-note-owner-key") || ""),
+    expiresAt: String(input.expiresAt || context.request.headers.get("x-publish-note-expires-at") || ""),
+    signature: String(input.signature || context.request.headers.get("x-publish-note-signature") || ""),
+    tokenName: String(input.tokenName || "Obsidian plugin"),
+  });
+  return json(result, 200);
 }
 
 async function apiRequest(context: WorkerContext): Promise<Response> {
