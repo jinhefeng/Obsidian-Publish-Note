@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const vaultPath = process.env.OBSIDIAN_VAULT_PATH || "/Users/jinhefeng/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home";
 const sourceDirectory = join(projectRoot, "plugin");
-const targetDirectory = join(vaultPath, ".obsidian", "plugins", "share-publisher");
+const targetDirectory = join(vaultPath, ".obsidian", "plugins", "publish-note");
 const runtimeFiles = ["manifest.json", "main.js"];
 
 await mkdir(targetDirectory, { recursive: true });

@@ -69,7 +69,7 @@
 #### T4.1 — 本地可安装插件
 - Status: 已完成
 - Objective: 提供 Obsidian 能加载的 manifest、main.js 和 compiler runtime
-- Acceptance: `plugin/` 可直接复制到 vault 的 `.obsidian/plugins/share-publisher/`，artifact 检查通过
+- Acceptance: `plugin/` 可直接复制到 vault 的 `.obsidian/plugins/publish-note/`，artifact 检查通过；旧 `.obsidian/plugins/share-publisher/` 仅作为历史安装目录保留，不自动删除
 - Evidence: `npm run check:plugin`, `plugin/manifest.json`
 
 #### T4.2 — 发布当前笔记
@@ -115,13 +115,13 @@
 - Evidence: 用户日志确认上传会话及三次分片均 200，但 commit 因原生 CSS 使用 utf8 被 Worker 正确拒绝；0.2.11 修复 D1 数组 BLOB，0.2.13 改为 base64 资产；70 项测试通过，完整重载 Obsidian 后合成笔记已在现有个人 Worker 首发成功；详见 `.engineering/manual-test-findings.md`
 
 #### T5.2 — Obsidian 发布产物自动同步
-- Status: 进行中；0.2.23 已生成根目录镜像、Release 暂存包并同步开发 Vault，待提交到远程 main
+- Status: 进行中；0.2.24 已切换插件 ID 为 `publish-note`，生成根目录镜像、Release 暂存包并同步新 Vault 目录，待提交到远程 main
 - Objective: 让 `plugin/` 成为唯一插件源目录，并自动同步根目录、Release 暂存目录和 Vault 安装目录
 - Acceptance: `plugin/manifest.json` 与 `plugin/main.js` 经过构建后生成根目录 `manifest.json`/`main.js`、`dist/obsidian-release/` 中的精确发布文件以及 Vault runtime；parity check 能拒绝过期或多余文件；`compiler.js`、`src/`、`server/` 不进入 Release
 - Evidence: `scripts/package-plugin.mjs`, `npm run update:plugin`, `npm run check:plugin`, `LICENSE`, `manifest.json`, `main.js`
 
 #### T5.3 — GitHub Release 与社区目录交付
-- Status: 进行中；自动化工作流已加入，待推送 main、创建 0.2.23 tag 并完成社区目录提交
+- Status: 进行中；远程当前仅有 `0.2.23` Release 且没有插件 assets；待推送 main、创建不带 `v` 的 `0.2.24` tag/Release 并完成社区目录提交
 - Objective: 让每个版本以准确的 manifest 版本生成 GitHub Release，并满足 Obsidian Community 根目录校验
 - Acceptance: 根目录有 manifest、README、LICENSE；Release tag 与 `plugin/manifest.json` 版本一致；Release 仅包含 `main.js`、`manifest.json` 和可选 `styles.css`；main push/tag workflow 在镜像漂移时失败
 - Evidence: `.github/workflows/plugin-release.yml`, `README.md`, `README.zh-CN.md`, `LICENSE`; 官方规则以 `https://docs.obsidian.md/plugins/releasing/submit-plugin` 为准
@@ -137,7 +137,7 @@
 - Task: T5.2 → T5.3
 - Parent path: T5
 - Objective: 完成插件发布产物自动同步、GitHub Release 校验和 Obsidian 社区目录提交准备
-- Next action: 检查并提交 0.2.23 的根目录镜像、MIT License 与自动化工作流；随后创建匹配版本的 Release 并提交社区目录，真实桌面部署验收继续保留为并行验收项
+- Next action: 检查并提交 0.2.24 的 `publish-note` 根目录镜像、MIT License 与自动化工作流；随后创建匹配版本的 Release 并提交社区目录，真实桌面部署验收继续保留为并行验收项
 
 ## 5. Decision Log
 
@@ -216,6 +216,7 @@
 | 2026-09-18 | 插件升级至 0.2.21，复用历史 Publish Note D1 与 Worker，并改为设置页内确认取消连接、合并重复刷新 | 断开后重部署保留原分享域名与内容；避免原生确认框抢占设置页焦点，确保取消操作不会关闭设置弹窗或重绘两次 | T4.3, T4.6 |
 | 2026-09-19 | 插件升级至 0.2.22，优化取消连接确认态 | 点击取消连接后隐藏已连接按钮，仅显示确认和取消；取消恢复原状，确认才执行解绑 | T4.3 |
 | 2026-09-19 | 插件升级至 0.2.23，建立 Obsidian 社区发布产物同步边界并加入 MIT License | 统一 `plugin/` 源文件到根目录镜像、Release 暂存包和 Vault 的自动同步，避免版本更新漏传 manifest 或 main.js | T5.2, T5.3 |
+| 2026-09-19 | 插件升级至 0.2.24，并将 Obsidian 插件 ID 从 `share-publisher` 切换为 `publish-note` | 修复社区提交时 manifest 身份与目标安装目录不一致，并为匹配 manifest 的无 `v` GitHub Release 做准备；旧目录不自动删除 | T4.1, T5.2, T5.3 |
 
 ## 8. Detail Pointers
 

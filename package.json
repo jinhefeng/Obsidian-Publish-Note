@@ -1,6 +1,6 @@
 {
   "name": "obsidian-publish-note",
-  "version": "0.2.23",
+  "version": "0.2.24",
   "private": true,
   "description": "Publish active Obsidian Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
   "author": "Jin Hefeng",
