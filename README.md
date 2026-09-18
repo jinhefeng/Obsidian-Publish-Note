@@ -2,100 +2,89 @@
 
 **Language / 语言:** English | [中文](README.zh-CN.md)
 
-Publish Obsidian Markdown notes as stable, accessible share websites, with linked notes included according to your settings.
+Publish the active Obsidian Markdown note as a shareable website through your own Cloudflare account. Publish Note can include linked notes, upload referenced local assets, and keep a stable link when you publish updates.
 
-## Features
+## What it does
 
-- The current note is the share root and receives a stable `/s/{siteId}` URL.
-- Directly linked Markdown notes are included by default; adjust the scope with **Linked page depth** (`0` = current note only, `1` = direct links, higher values = deeper links).
+- Publishes the active note as the root page of a stable `/s/{siteId}` website.
+- Includes linked Markdown notes according to **Linked page depth**.
 - Supports WikiLinks, relative Markdown links, images, callouts, code blocks, tables, and task lists.
-- External URLs, `mailto:` links, anchors, and external assets remain unchanged and are never added to the linked-page queue.
-- Uses Obsidian's native renderer when available and falls back to the deterministic renderer when needed.
-- The published URL is copied automatically; successful publishing stores `share_site_id`, `share_link`, and `share_updated` in the root note's frontmatter so later updates can keep the same site.
-- Personal deployments prefer the fixed Worker name `publish-note`, so the account hostname stays predictable; a suffix is used only when that Worker name is already occupied.
-- Optional **Debug mode** records sanitized deployment and publishing request/response details in the settings page. It never records tokens, request bodies, or note content, and the log can be copied for troubleshooting.
+- Uploads referenced local images and other supported assets.
+- Keeps external URLs, anchors, `mailto:` links, and external assets unchanged.
+- Copies the published URL automatically and writes `share_site_id`, `share_link`, and `share_updated` to the root note's frontmatter.
+- Uses Obsidian's native renderer when available and a deterministic fallback renderer otherwise.
 
-## Validation
+## Install
 
-Requires Node.js 26 or a Node.js version with TypeScript type stripping support.
+### Community plugins
 
-```bash
-npm test
-npm run check:plugin
-npm run check:worker
+In Obsidian, open **Settings → Community plugins → Browse**, search for **Publish Note**, install it, and enable it.
+
+### Manual installation
+
+Download `manifest.json` and `main.js` from the [latest GitHub Release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest). Place both files in:
+
+```text
+.obsidian/plugins/share-publisher/
 ```
 
-## Plugin packaging
+Then open **Settings → Community plugins** and enable **Publish Note**.
 
-Maintainers edit `plugin/manifest.json` and `plugin/main.js` as the plugin release sources. Run `npm run update:plugin` after a version or runtime change. The command rebuilds the embedded Worker artifact, generates the root `manifest.json` and `main.js` mirrors, prepares `dist/obsidian-release/`, validates parity, and syncs the runtime files to the development Vault. Upload only the generated `main.js` and `manifest.json` from the release staging directory to a GitHub Release; `src/`, `server/`, `plugin/`, and `plugin/compiler.js` are not plugin installation assets.
+## Quick start
 
-## Cloudflare publishing
+1. On Obsidian desktop, open **Settings → Community plugins → Publish Note**.
+2. Click **Deploy to my Cloudflare** and authorize the Publish Note application in Cloudflare.
+3. Open the Markdown note you want to publish.
+4. Choose **Publish Note** from the command palette, ribbon, or note context menu.
+5. Open the copied link or find it in the note frontmatter.
 
-Publish Note serves pages through Cloudflare Workers at `/s/{siteId}/`. The supported personal path uses a Worker and D1 in your Cloudflare account; current content is stored as D1 BLOB chunks and does not create or require R2. The planned official hosted path may use Worker, R2, and D1. Each account has a 50 MB current-content quota and up to 10 published Notes.
+The first deployment creates a private Worker and D1 database in your Cloudflare account. The plugin stores only the Worker URL and scoped Publish Token in the Vault after deployment. The Cloudflare access token is used in memory and revoked after setup.
 
-### Personal Cloudflare deployment
+After setup, include this plugin's settings when syncing the Vault to another device. Notes-only sync does not transfer the publishing connection.
 
-To stop using the connection in this Vault, click **Disconnect from my Cloudflare** in settings. This removes only the saved Worker URL and Publish Token from the Vault; it does not delete Cloudflare resources, published sites, or connections on other devices.
+## Linked notes and assets
 
-The primary personal deployment flow starts in the Obsidian settings page on desktop. Click **Deploy to my Cloudflare**, authorize the public Publish Note OAuth application in Cloudflare, and let the plugin create and initialize a private Worker and D1 database directly in your account. The plugin creates the initial private account and scoped Publish Token during setup; no email/password form or user-provided OAuth client is required. Content is stored as D1 BLOB chunks; no R2 bucket or R2 subscription is created. The plugin keeps the Cloudflare access token in memory only, revokes it after deployment, and saves only the Worker URL and scoped Publish Token.
+**Linked page depth** controls how far Publish Note follows links:
 
-The personal deployment prefers the stable Worker name `publish-note`. The hostname therefore normally stays the same for that Cloudflare account while each note keeps its stable `/s/{siteId}` path. If another Worker already uses that name, Publish Note chooses a deterministic account-based suffix; an existing older or suffixed Worker URL remains valid and is not silently renamed.
+- `0`: publish only the active note.
+- `1`: include directly linked notes.
+- Higher values: include deeper linked notes.
 
-When reconnecting after **Disconnect**, the plugin inspects same-pattern D1 databases and reuses one whose schema is recognized as Publish Note. It also matches and updates the existing historical Publish Note Worker in place, preserving its hostname, then issues a new token for the existing personal account. If either resource is missing, Publish Note creates only the missing Worker or D1 and binds it to the resource that was found. Ambiguous historical databases still stop deployment instead of splitting content across new resources.
+The active note is always the share root. Local images and supported referenced assets are uploaded with the pages. External resources are not downloaded or rewritten.
 
-D1-only keeps the normal publishing experience for notes, linked pages, images, and mobile publishing after setup. Individual files are limited to 20 MB and content is split into 1 MB chunks to stay within D1 and Workers Free request limits. Free-plan D1 limits are hard limits rather than automatic overage charges; see Cloudflare's [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) and [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
+## Settings
 
-Set up once on desktop, then sync this plugin's settings with the same Vault on your phone. Syncing notes alone does not transfer the connection: include community plugin settings in your sync configuration. Publish Note reloads synced settings automatically and pins one connection for each publish. Desktop and mobile can publish and update notes without another Cloudflare authorization, even when the desktop computer is off. Selecting an existing connection never redeploys it.
+- **Language**: English by default, with Chinese available.
+- **Linked page depth**: controls linked-note traversal.
+- **Use Obsidian renderer**: preserves Obsidian rendering when supported.
+- **Debug mode**: shows sanitized deployment and publishing diagnostics when troubleshooting.
 
-Setup uses Authorization Code + PKCE with a temporary desktop callback. Deployment progress stays in memory; only a completed connection is saved. A failed attempt preserves existing connections and reports the failed stage under expandable technical details. An unconfirmed write is never automatically repeated or reported as cleaned up. The [Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/jinhefeng/Obsidian-Publish-Note) button, Wrangler, and `/setup` remain advanced fallbacks.
+The normal settings page does not ask for a service URL or Publish Token. The official hosted connection is planned; the current supported path deploys to your own Cloudflare account.
 
-When troubleshooting a deployment or publish failure, enable **Debug mode** in the settings page and retry the operation. The **Debug log** records the phase, route template, HTTP status, internal code, Cloudflare code/message, response content type, retry attempt, and duration. Credentials, request bodies, and note contents are excluded.
+## Limits and privacy
 
-The Worker can later be bound to a custom domain. Set `PUBLIC_BASE_URL` when the sharing URL must use that domain; otherwise links use the request's Worker hostname.
+- Personal publishing uses Cloudflare Workers and D1; it does not create or require R2.
+- Each account supports up to 50 MB of current published content and 10 published notes.
+- Individual files are limited to 20 MB.
+- Content is uploaded in chunks to stay within Cloudflare request limits.
+- Debug logs exclude credentials, request bodies, and note contents.
 
-### Official hosted service (planned)
+## Updating a published note
 
-The current plugin settings expose the personal **Deploy to my Cloudflare** action; once a connection exists, the same block also offers **Disconnect from my Cloudflare**. The official hosted connection is kept as a planned product path and is not offered as an active settings action in this release. Existing legacy official-service configuration remains readable for compatibility, but new users are not asked to connect to it.
+Publish Note stores the site ID in the root note's frontmatter. Publishing the same root note again updates the existing site instead of creating a new link.
 
-When the official path is introduced, the official Publish Note service will act as the control plane for account connection, device authorization, Publish Token issuance, quotas, and tenant isolation. It will be separate from the personal Worker path and will not be required when a user publishes through their own Worker.
+## Troubleshooting
 
-The local in-memory server remains available only for contract and plugin testing. It is not production hosting.
+- Reload community plugins after installing or updating the plugin.
+- For a publish failure, enable **Debug mode**, retry once, and inspect the copyable Debug log.
+- For a deployment failure, confirm that Obsidian desktop can open the Cloudflare authorization flow and that the account permits Worker and D1 changes.
+- For a manual installation, confirm that `manifest.json` and `main.js` are directly inside `.obsidian/plugins/share-publisher/`.
 
-### OAuth client configuration
-
-The released plugin uses a public Cloudflare OAuth client for desktop Authorization Code + PKCE, with token endpoint authentication method `none`, the fixed loopback redirect `http://127.0.0.1:8976/oauth/callback`, and only account-read, Workers Scripts write, and D1 write scopes. The public client ID is embedded in the plugin; no client secret is shipped. Users do not register an OAuth client. The official Publish Note Worker and control plane are separate planned infrastructure and are not needed for the current personal-deployment flow.
-
-## Local testing in Obsidian
-
-These commands are for plugin development only. Customers install the released plugin and use its settings; they do not run `npm run update:plugin` or create their own OAuth client.
-
-1. Start the local publishing service:
-
-   ```bash
-   npm run dev:server
-   ```
-
-   The launcher is reusable: `npm run status`, `npm run restart`, `npm run stop`, and `npm run logs` are also available. Every `start` first force-stops processes listening on the configured port, then launches a fresh service.
-
-2. Sync the latest plugin files into your Vault:
-
-   ```bash
-   npm run update:plugin
-   ```
-
-   The default target is the development Vault. Set `OBSIDIAN_VAULT_PATH` to use another Vault.
-
-3. In Obsidian, open **Settings → Community plugins** and enable **Publish Note**.
-
-4. The normal settings page intentionally does not expose service credentials. To exercise the local test backend in Obsidian, temporarily seed the plugin data with the compatibility values `apiBaseUrl: "http://127.0.0.1:8787"`, `publishToken: "dev-token"`, `selfPublishToken: "dev-token"`, `deploymentWorkerUrl: "http://127.0.0.1:8787"`, `deploymentManaged: true`, and `cloudflareMode: "self"`.
-
-5. Open a Markdown note and choose **Publish Note** from the command palette, ribbon upload icon, or note context menu. The published URL is copied automatically. The root page is `index.html`; linked pages use `page-1.html`, `page-2.html`, and so on. Pages and assets upload sequentially in small chunks before the new revision is committed.
-
-The local service uses in-memory storage, so published sites disappear when the server stops; it is intended for plugin interaction and contract testing.
-
-## Project links
+## Links
 
 - [GitHub repository](https://github.com/jinhefeng/Obsidian-Publish-Note)
-- Author: [Jin Hefeng](https://github.com/jinhefeng)
+- [Latest release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest)
+- [Author: Jin Hefeng](https://github.com/jinhefeng)
+- [MIT License](LICENSE)
 
-Project delivery documents are in `.engineering/`, and the global task index is `Task Constitution.md`.
+For development, testing, packaging, and release instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).

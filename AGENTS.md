@@ -6,9 +6,9 @@ This file records the durable project requirements that apply to future developm
 
 - Product name: `Publish Note`.
 - Author: `Jin Hefeng`.
-- Obsidian plugin ID: `publish-note`.
-- Keep the plugin ID and the Vault folder name `.obsidian/plugins/publish-note/` stable for compatibility with current installations. The former `share-publisher` folder is a legacy installation path and must not be deleted automatically.
-- Current plugin baseline: `0.2.24`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
+- Obsidian plugin ID: `share-publisher`.
+- Keep the plugin ID and the Vault folder name `.obsidian/plugins/share-publisher/` stable for compatibility with existing installations.
+- Current plugin baseline: `0.2.25`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
 - Versioning feedback is mandatory: announce the new plugin version in the working-session commentary when starting a plugin update and repeat it in the final response. Never report a plugin update as complete without stating the version.
 - GitHub repository: [jinhefeng/Obsidian-Publish-Note](https://github.com/jinhefeng/Obsidian-Publish-Note).
 - Git remote: `origin` must point to `https://github.com/jinhefeng/Obsidian-Publish-Note.git`.
@@ -30,6 +30,7 @@ This file records the durable project requirements that apply to future developm
 - `README.zh-CN.md` contains the Chinese documentation.
 - Each README must have a small language switch at the top linking to the other file. Do not write the full Chinese and English documents inline in the same README body.
 - Apply the same structure to `plugin/README.md` and `plugin/README.zh-CN.md`.
+- Root and `plugin/` README files are user-facing plugin documentation. Keep project development, testing, packaging, and release procedures in `CONTRIBUTING.md` and `CONTRIBUTING.zh-CN.md` instead of making the README read like an engineering project overview.
 - Keep the repository and author links consistent across `plugin/manifest.json`, `package.json`, both README pairs, and the settings page.
 - When user-facing copy changes, update the relevant English and Chinese source separately and preserve the language-switch links.
 
@@ -51,7 +52,7 @@ This file records the durable project requirements that apply to future developm
   - root `manifest.json` for the Obsidian Community directory;
   - root `main.js` as the repository and manual-install mirror;
   - `dist/obsidian-release/manifest.json` and `dist/obsidian-release/main.js` as the exact GitHub Release staging files;
-  - `Vault/.obsidian/plugins/publish-note/manifest.json` and `Vault/.obsidian/plugins/publish-note/main.js` for local smoke testing.
+  - `Vault/.obsidian/plugins/share-publisher/manifest.json` and `Vault/.obsidian/plugins/share-publisher/main.js` for local smoke testing.
 - The synchronization workflow must build the plugin first, then generate the root mirrors and Release staging files, validate that their contents and versions match the `plugin/` sources, and only then sync the Vault. It must never copy `src/`, `server/`, `tests/`, `plugin/`, or `plugin/compiler.js` into the Release staging directory.
 - `plugin/compiler.js` is a development/reference file only. It is not a runtime dependency and must not be included in the root runtime mirror, the Obsidian installation directory, or GitHub Release assets.
 - Extend or preserve `npm run update:plugin` as the single local synchronization entry point. After changing `plugin/main.js` or `plugin/manifest.json`, run it before validation; if it does not regenerate every artifact listed above, the plugin update is incomplete.
