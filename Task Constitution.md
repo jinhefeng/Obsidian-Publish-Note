@@ -115,13 +115,13 @@
 - Evidence: 用户日志确认上传会话及三次分片均 200，但 commit 因原生 CSS 使用 utf8 被 Worker 正确拒绝；0.2.11 修复 D1 数组 BLOB，0.2.13 改为 base64 资产；70 项测试通过，完整重载 Obsidian 后合成笔记已在现有个人 Worker 首发成功；详见 `.engineering/manual-test-findings.md`
 
 #### T5.2 — Obsidian 发布产物自动同步
-- Status: 进行中；0.3.0 已将插件 ID 改为 `one-click-publish`，待完成产物重建、Release 推送和新身份验证
+- Status: 已完成；0.3.0 的插件产物已重建，根目录镜像、Release 暂存包和开发 Vault 均已同步并通过 parity check
 - Objective: 让 `plugin/` 成为唯一插件源目录，并自动同步根目录、Release 暂存目录和 Vault 安装目录
 - Acceptance: `plugin/manifest.json` 与 `plugin/main.js` 经过构建后生成根目录 `manifest.json`/`main.js`、`dist/obsidian-release/` 中的精确发布文件以及 Vault runtime；parity check 能拒绝过期或多余文件；`compiler.js`、`src/`、`server/` 不进入 Release
 - Evidence: `scripts/package-plugin.mjs`, `npm run update:plugin`, `npm run check:plugin`, `LICENSE`, `manifest.json`, `main.js`
 
 #### T5.3 — GitHub Release 与社区目录交付
-- Status: 进行中；0.3.0 的新插件身份和目标仓库链接已完成本地改造，待推送并创建匹配的 Release；社区目录需按新 ID 作为新条目提交
+- Status: 进行中；0.3.0 已推送到重命名后的仓库并创建匹配 Release；社区目录仍需按 `one-click-publish` 作为新条目提交
 - Objective: 让每个版本以准确的 manifest 版本生成 GitHub Release，并满足 Obsidian Community 根目录校验
 - Acceptance: 根目录有 manifest、README、LICENSE；Release tag 与 `plugin/manifest.json` 版本一致；Release 仅包含 `main.js`、`manifest.json` 和可选 `styles.css`；main push/tag workflow 在镜像漂移时失败
 - Evidence: `.github/workflows/plugin-release.yml`, `README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CONTRIBUTING.zh-CN.md`, `LICENSE`; 官方规则以 `https://docs.obsidian.md/plugins/releasing/submit-plugin` 为准
@@ -137,7 +137,7 @@
 - Task: T5.2 → T5.3
 - Parent path: T5
 - Objective: 完成插件发布产物自动同步、GitHub Release 校验和 Obsidian 社区目录提交准备
-- Next action: 完成 `0.3.0` 本地验证，重命名 GitHub 仓库并推送，再创建匹配 Release；真实桌面部署验收继续保留为并行验收项
+- Next action: 按新 ID `one-click-publish` 提交 Obsidian 社区目录，并在需要时完成真实桌面安装/更新 smoke test；真实 Cloudflare 验收继续保留为并行验收项
 
 ## 5. Decision Log
 
@@ -220,6 +220,7 @@
 | 2026-09-19 | 插件升级至 0.2.25，并将 Obsidian 插件 ID 恢复为 `share-publisher` | 保持已存在的 Obsidian 插件身份和更新目录稳定；README、打包与 Vault 同步目标恢复一致 | T4.1, T5.2, T5.3 |
 | 2026-09-19 | 将根目录和 `plugin/` README 重定位为插件用户文档，并新增中英文 `CONTRIBUTING` 开发指南 | 避免用户 README 混入本地服务、测试、架构和 Release 实现细节；保留维护者所需的工程流程 | T5.3 |
 | 2026-09-19 | 按用户确认将产品改名为 One-Click Publish，插件 ID 改为 `one-click-publish`，目标仓库改为 `jinhefeng/One-Click-Publish`，版本提升至 0.3.0 | 新身份突出一次 Cloudflare 连接后的单击发布体验；旧 `share-publisher` 安装和 `publish-note` Cloudflare 内部资源不自动删除，保留历史内容与资源兼容性 | T4.1, T5.2, T5.3 |
+| 2026-09-19 | 提交 `ebc81d5` 并推送 `0.3.0` 标签；GitHub Actions 验证通过并创建含 `main.js`、`manifest.json` 的 Release | 确保新插件身份、manifest 版本和 Release 标签完全匹配，满足 Obsidian 发布资产边界 | T5.2, T5.3 |
 
 ## 8. Detail Pointers
 
