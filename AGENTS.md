@@ -8,7 +8,7 @@ This file records the durable project requirements that apply to future developm
 - Author: `Jin Hefeng`.
 - Obsidian plugin ID: `one-click-publish`.
 - Keep the plugin ID and the Vault folder name `.obsidian/plugins/one-click-publish/` stable for compatibility with current installations. Existing Cloudflare resources and the legacy `share-publisher` installation are not deleted automatically.
-- Current plugin baseline: `0.3.0`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
+- Current plugin baseline: `0.3.1`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
 - Versioning feedback is mandatory: announce the new plugin version in the working-session commentary when starting a plugin update and repeat it in the final response. Never report a plugin update as complete without stating the version.
 - GitHub repository: [jinhefeng/One-Click-Publish](https://github.com/jinhefeng/One-Click-Publish).
 - Git remote: `origin` must point to `https://github.com/jinhefeng/One-Click-Publish.git`.

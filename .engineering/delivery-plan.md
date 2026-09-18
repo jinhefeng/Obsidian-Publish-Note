@@ -71,7 +71,7 @@
 
 ### Contract C-009 — Obsidian plugin release artifacts
 
-- Status: frozen for 0.3.0
+- Status: frozen for 0.3.1
 - Producer: CMP-017 / WP-005
 - Consumers: Obsidian Community directory, GitHub Release, local Obsidian Vault
 - Owner: T5
