@@ -1,4 +1,4 @@
-# Component Catalog: Cloudflare-first Publish Note
+# Component Catalog: Cloudflare-first One-Click Publish
 
 | `component_id` | Capability | Owner | Consumers | Public interface | Maturity | Decision | Migration |
 |---|---|---|---|---|---|---|---|

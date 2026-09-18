@@ -48,6 +48,9 @@ if (releaseFiles.join("\0") !== expectedReleaseFiles.join("\0")) {
 if (!manifest.id || !manifest.name || !manifest.version || !manifest.minAppVersion) {
   throw new Error("Plugin manifest is missing a required field");
 }
+if (manifest.id !== "one-click-publish" || manifest.name !== "One-Click Publish") {
+  throw new Error("Plugin manifest identity drifted; expected one-click-publish / One-Click Publish");
+}
 if ((!main.includes("module.exports = SharePublisherPlugin") && !main.includes("module.exports = { default:")) || !main.includes("require(\"obsidian\")")) {
   throw new Error("Plugin main.js must expose a default Obsidian Plugin class");
 }

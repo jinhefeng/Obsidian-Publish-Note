@@ -4,12 +4,12 @@
 
 把 Obsidian 中的一篇笔记，以尽可能少的操作发布成稳定、可访问的公开分享网站；默认自动携带它引用的笔记。
 
-首个 MVP 当前聚焦个人 Cloudflare 路径：个人 Worker 由 Obsidian 桌面插件通过 Cloudflare OAuth/API 直接创建自己的 Worker/D1，并以 D1 BLOB 保存内容，不要求 R2。官方托管 Worker 与 Publish Note 控制面保留为后续规划，不在当前插件设置页提供连接入口。插件本地编译内容，只保存 Worker URL 和 Publish Note Token；本地内存服务仅作为测试替身。Deploy Button、手动 `/setup` 和 migration 仅保留为高级备用路径。
+首个 MVP 当前聚焦个人 Cloudflare 路径：个人 Worker 由 Obsidian 桌面插件通过 Cloudflare OAuth/API 直接创建自己的 Worker/D1，并以 D1 BLOB 保存内容，不要求 R2。官方托管 Worker 与 One-Click Publish 控制面保留为后续规划，不在当前插件设置页提供连接入口。插件本地编译内容，只保存 Worker URL 和 One-Click Publish Token；本地内存服务仅作为测试替身。Deploy Button、手动 `/setup` 和 migration 仅保留为高级备用路径。
 
 ## 2. Success Criteria
 
 - [ ] 一篇 Markdown 笔记可以从本地编译为可访问的 HTML 网站资源。
-- [ ] 插件或本地发布客户端可以上传一个发布包，并获得稳定的账户 Worker 主机名与 `/s/{siteId}` 链接；断开后重新部署会复用可识别的历史 Publish Note D1/Worker，缺失资源按需补建。
+- [ ] 插件或本地发布客户端可以上传一个发布包，并获得稳定的账户 Worker 主机名与 `/s/{siteId}` 链接；断开后重新部署会复用可识别的历史 One-Click Publish D1/Worker，缺失资源按需补建。
 - [ ] 同一站点再次发布时复用原链接，并以新 revision 原子切换内容。
 - [ ] Worker 通过私有存储提供网页访问；官方 R2 不直接暴露，个人 D1-only 不创建 R2 bucket。
 - [ ] WikiLink、图片、基础 Markdown、原生 Obsidian 渲染快照、文件名标题、字体样式和引用页面发布满足 MVP 验收样例。
@@ -69,7 +69,7 @@
 #### T4.1 — 本地可安装插件
 - Status: 已完成
 - Objective: 提供 Obsidian 能加载的 manifest、main.js 和 compiler runtime
-- Acceptance: `plugin/` 可直接复制到 vault 的 `.obsidian/plugins/share-publisher/`，artifact 检查通过
+- Acceptance: `plugin/` 可直接复制到 vault 的 `.obsidian/plugins/one-click-publish/`，artifact 检查通过
 - Evidence: `npm run check:plugin`, `plugin/manifest.json`
 
 #### T4.2 — 发布当前笔记
@@ -100,7 +100,7 @@
 - Status: 进行中；已有 Worker/D1 和有效 Token，待全新 Vault 与移动端验收
 - Objective: 让 Obsidian 桌面插件通过公开 OAuth + PKCE 直接创建 Worker/D1、上传内嵌 artifact、初始化目标 Worker 和保存 Token；个人路径不请求或创建 R2
 - Acceptance: 桌面端完成 loopback callback、资源创建、migration、一次性初始化、secret 删除和 OAuth revoke；移动端禁用部署但可使用同步后的 Worker；失败不覆盖既有可用配置；不请求 provisioning control plane
-- Evidence: `plugin/main.js` 的 `provisionPersonalCloudflare`/`runDirectCloudflareDeployment`、`scripts/build-plugin.mjs`、`tests/plugin-cloudflare.test.ts`; 0.2.21 检查 D1 表结构并复用历史 Publish Note 数据库与 Worker，通过 reconnect 为原账户签发新 Token；Worker 或 D1 缺失时仅补建缺失资源
+- Evidence: `plugin/main.js` 的 `provisionPersonalCloudflare`/`runDirectCloudflareDeployment`、`scripts/build-plugin.mjs`、`tests/plugin-cloudflare.test.ts`; 0.2.21 检查 D1 表结构并复用历史 One-Click Publish 数据库与 Worker，通过 reconnect 为原账户签发新 Token；Worker 或 D1 缺失时仅补建缺失资源
 
 ### T5 — 集成验证与 MVP 交付
 - Status: 进行中
@@ -111,17 +111,17 @@
 #### T5.1 — 桌面直连个人部署真实验收
 - Status: 进行中；已修复并部署 D1 commit 500，且修复原生 CSS 资产 400，待真实插件首发/更新复验
 - Objective: 用公开 OAuth Client 和真实 Cloudflare 账户验证插件设置页直接完成 Worker/D1-only 部署、发布、更新和删除
-- Acceptance: 全新桌面 Vault 不填服务地址/Token，授权后仅出现 Worker、D1，插件可直接 Publish Note；移动端同步配置后可发布；重复/冲突/失败/拒绝路径有证据
+- Acceptance: 全新桌面 Vault 不填服务地址/Token，授权后仅出现 Worker、D1，插件可直接 One-Click Publish；移动端同步配置后可发布；重复/冲突/失败/拒绝路径有证据
 - Evidence: 用户日志确认上传会话及三次分片均 200，但 commit 因原生 CSS 使用 utf8 被 Worker 正确拒绝；0.2.11 修复 D1 数组 BLOB，0.2.13 改为 base64 资产；70 项测试通过，完整重载 Obsidian 后合成笔记已在现有个人 Worker 首发成功；详见 `.engineering/manual-test-findings.md`
 
 #### T5.2 — Obsidian 发布产物自动同步
-- Status: 进行中；0.2.25 已将插件 ID 恢复为 `share-publisher`，根目录镜像、Release 暂存包和开发 Vault 已同步
+- Status: 进行中；0.3.0 已将插件 ID 改为 `one-click-publish`，待完成产物重建、Release 推送和新身份验证
 - Objective: 让 `plugin/` 成为唯一插件源目录，并自动同步根目录、Release 暂存目录和 Vault 安装目录
 - Acceptance: `plugin/manifest.json` 与 `plugin/main.js` 经过构建后生成根目录 `manifest.json`/`main.js`、`dist/obsidian-release/` 中的精确发布文件以及 Vault runtime；parity check 能拒绝过期或多余文件；`compiler.js`、`src/`、`server/` 不进入 Release
 - Evidence: `scripts/package-plugin.mjs`, `npm run update:plugin`, `npm run check:plugin`, `LICENSE`, `manifest.json`, `main.js`
 
 #### T5.3 — GitHub Release 与社区目录交付
-- Status: 进行中；`0.2.24` 的身份变更已回退，0.2.25 已完成本地验证，待推送并创建匹配的 Release；用户 README 与中英文开发者贡献指南已整理完成
+- Status: 进行中；0.3.0 的新插件身份和目标仓库链接已完成本地改造，待推送并创建匹配的 Release；社区目录需按新 ID 作为新条目提交
 - Objective: 让每个版本以准确的 manifest 版本生成 GitHub Release，并满足 Obsidian Community 根目录校验
 - Acceptance: 根目录有 manifest、README、LICENSE；Release tag 与 `plugin/manifest.json` 版本一致；Release 仅包含 `main.js`、`manifest.json` 和可选 `styles.css`；main push/tag workflow 在镜像漂移时失败
 - Evidence: `.github/workflows/plugin-release.yml`, `README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CONTRIBUTING.zh-CN.md`, `LICENSE`; 官方规则以 `https://docs.obsidian.md/plugins/releasing/submit-plugin` 为准
@@ -137,7 +137,7 @@
 - Task: T5.2 → T5.3
 - Parent path: T5
 - Objective: 完成插件发布产物自动同步、GitHub Release 校验和 Obsidian 社区目录提交准备
-- Next action: 推送 `0.2.25` 并确认社区目录读取 `share-publisher` 的匹配 Release；真实桌面部署验收继续保留为并行验收项
+- Next action: 完成 `0.3.0` 本地验证，重命名 GitHub 仓库并推送，再创建匹配 Release；真实桌面部署验收继续保留为并行验收项
 
 ## 5. Decision Log
 
@@ -158,7 +158,7 @@
 
 - Constraints: 海外托管优先；官方 R2 保持私有，个人部署不使用 R2；MVP 暂不包含账号、收费、统计、搜索、评论、密码保护和主题市场。
 - Dependencies: Obsidian Plugin API；Cloudflare Worker、D1，以及官方服务可选 R2；产品域名和部署凭据将在 T3/T5 接入。
-- Repository handoff: `origin` 已配置并推送至 `https://github.com/jinhefeng/Obsidian-Publish-Note.git`；GitHub 远程项目已创建。
+- Repository handoff: `origin` 将切换并推送至 `https://github.com/jinhefeng/One-Click-Publish.git`；GitHub 远程项目重命名后保留历史。
 - Agent handoff: 长期项目要求集中记录在 `AGENTS.md`，后续代理进入项目时先读取该文件。
 - Relevant files, links, or prior agreements:
   - 参考项目: https://github.com/licc168/obsidian-htmlto-link/
@@ -219,6 +219,7 @@
 | 2026-09-19 | 插件升级至 0.2.24，并将 Obsidian 插件 ID 从 `share-publisher` 切换为 `publish-note` | 修复社区提交时 manifest 身份与目标安装目录不一致，并为匹配 manifest 的无 `v` GitHub Release 做准备；旧目录不自动删除 | T4.1, T5.2, T5.3 |
 | 2026-09-19 | 插件升级至 0.2.25，并将 Obsidian 插件 ID 恢复为 `share-publisher` | 保持已存在的 Obsidian 插件身份和更新目录稳定；README、打包与 Vault 同步目标恢复一致 | T4.1, T5.2, T5.3 |
 | 2026-09-19 | 将根目录和 `plugin/` README 重定位为插件用户文档，并新增中英文 `CONTRIBUTING` 开发指南 | 避免用户 README 混入本地服务、测试、架构和 Release 实现细节；保留维护者所需的工程流程 | T5.3 |
+| 2026-09-19 | 按用户确认将产品改名为 One-Click Publish，插件 ID 改为 `one-click-publish`，目标仓库改为 `jinhefeng/One-Click-Publish`，版本提升至 0.3.0 | 新身份突出一次 Cloudflare 连接后的单击发布体验；旧 `share-publisher` 安装和 `publish-note` Cloudflare 内部资源不自动删除，保留历史内容与资源兼容性 | T4.1, T5.2, T5.3 |
 
 ## 8. Detail Pointers
 

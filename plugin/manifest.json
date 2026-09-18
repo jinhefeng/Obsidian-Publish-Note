@@ -1,9 +1,9 @@
 {
-  "id": "share-publisher",
-  "name": "Publish Note",
-  "version": "0.2.25",
+  "id": "one-click-publish",
+  "name": "One-Click Publish",
+  "version": "0.3.0",
   "minAppVersion": "1.5.0",
-  "description": "Publish active Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
+  "description": "Publish the active Obsidian note with one click after a one-time Cloudflare setup, including linked pages and local assets.",
   "author": "Jin Hefeng",
   "authorUrl": "https://github.com/jinhefeng",
   "isDesktopOnly": false

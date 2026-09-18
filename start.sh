@@ -37,8 +37,8 @@ Usage: ./start.sh [command]
 
 Commands:
   start    Force-stop port occupants, then start a fresh local publish service
-  stop     Stop only the Publish Note service owned by this project
-  restart  Stop and start the Publish Note service
+  stop     Stop only the One-Click Publish service owned by this project
+  restart  Stop and start the One-Click Publish service
   status   Show process, port, URL, and log status
   logs     Follow the service log
   help     Show this help

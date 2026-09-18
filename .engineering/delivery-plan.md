@@ -1,4 +1,4 @@
-# Delivery Plan: Cloudflare-first Publish Note
+# Delivery Plan: Cloudflare-first One-Click Publish
 
 ## Contract register
 
@@ -71,12 +71,12 @@
 
 ### Contract C-009 — Obsidian plugin release artifacts
 
-- Status: frozen for 0.2.25
+- Status: frozen for 0.3.0
 - Producer: CMP-017 / WP-005
 - Consumers: Obsidian Community directory, GitHub Release, local Obsidian Vault
 - Owner: T5
 - Inputs: hand-maintained `plugin/manifest.json` and self-contained `plugin/main.js`; optional `plugin/styles.css`
-- Outputs: root `manifest.json`/`main.js` mirrors, `dist/obsidian-release/` assets, and Vault `.obsidian/plugins/share-publisher/` runtime files
+- Outputs: root `manifest.json`/`main.js` mirrors, `dist/obsidian-release/` assets, and Vault `.obsidian/plugins/one-click-publish/` runtime files
 - Compatibility: `plugin/manifest.json` is the sole version authority; all generated manifest and runtime copies must be byte-identical to their source; Release tag must equal the `x.y.z` manifest version; `plugin/compiler.js`, source directories, and test files are never Release assets
 - Verification: `scripts/package-plugin.mjs`, `npm run check:plugin`, `npm run update:plugin`, and `.github/workflows/plugin-release.yml`
 - Change rule: changing the source/target mapping, allowed Release files, or version authority requires updating the packaging script, parity check, README pairs, AGENTS.md, and release workflow together

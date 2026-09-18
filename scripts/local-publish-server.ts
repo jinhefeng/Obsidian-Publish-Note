@@ -157,10 +157,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { server } = createLocalPublishServer();
   server.on("error", (error) => {
     if (error?.code === "EADDRINUSE") {
-      console.error(`Publish Note server cannot start: ${host}:${port} is already in use.`);
+      console.error(`One-Click Publish server cannot start: ${host}:${port} is already in use.`);
       console.error("Use ./start.sh status to inspect the existing service, or ./start.sh restart to restart this project service.");
     } else {
-      console.error("Publish Note server failed:", error);
+      console.error("One-Click Publish server failed:", error);
     }
     process.exitCode = 1;
   });

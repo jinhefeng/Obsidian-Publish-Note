@@ -1,8 +1,8 @@
-# Publish Note
+# One-Click Publish
 
 **Language / 语言:** English | [中文](README.zh-CN.md)
 
-Publish the active Obsidian Markdown note as a shareable website through your own Cloudflare account. Publish Note can include linked notes, upload referenced local assets, and keep a stable link when you publish updates.
+Once your Cloudflare account is connected, publish the active Obsidian Markdown note with one click. One-Click Publish can include linked notes, upload referenced local assets, and keep a stable link when you publish updates.
 
 ## What it does
 
@@ -18,24 +18,24 @@ Publish the active Obsidian Markdown note as a shareable website through your ow
 
 ### Community plugins
 
-In Obsidian, open **Settings → Community plugins → Browse**, search for **Publish Note**, install it, and enable it.
+In Obsidian, open **Settings → Community plugins → Browse**, search for **One-Click Publish**, install it, and enable it.
 
 ### Manual installation
 
-Download `manifest.json` and `main.js` from the [latest GitHub Release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest). Place both files in:
+Download `manifest.json` and `main.js` from the [latest GitHub Release](https://github.com/jinhefeng/One-Click-Publish/releases/latest). Place both files in:
 
 ```text
-.obsidian/plugins/share-publisher/
+.obsidian/plugins/one-click-publish/
 ```
 
-Then open **Settings → Community plugins** and enable **Publish Note**.
+Then open **Settings → Community plugins** and enable **One-Click Publish**.
 
 ## Quick start
 
-1. On Obsidian desktop, open **Settings → Community plugins → Publish Note**.
-2. Click **Deploy to my Cloudflare** and authorize the Publish Note application in Cloudflare.
+1. On Obsidian desktop, open **Settings → Community plugins → One-Click Publish**.
+2. Click **Deploy to my Cloudflare** and complete the one-time Cloudflare authorization.
 3. Open the Markdown note you want to publish.
-4. Choose **Publish Note** from the command palette, ribbon, or note context menu.
+4. Choose **One-Click Publish** from the command palette, ribbon, or note context menu.
 5. Open the copied link or find it in the note frontmatter.
 
 The first deployment creates a private Worker and D1 database in your Cloudflare account. The plugin stores only the Worker URL and scoped Publish Token in the Vault after deployment. The Cloudflare access token is used in memory and revoked after setup.
@@ -44,7 +44,7 @@ After setup, include this plugin's settings when syncing the Vault to another de
 
 ## Linked notes and assets
 
-**Linked page depth** controls how far Publish Note follows links:
+**Linked page depth** controls how far One-Click Publish follows links:
 
 - `0`: publish only the active note.
 - `1`: include directly linked notes.
@@ -71,19 +71,19 @@ The normal settings page does not ask for a service URL or Publish Token. The of
 
 ## Updating a published note
 
-Publish Note stores the site ID in the root note's frontmatter. Publishing the same root note again updates the existing site instead of creating a new link.
+One-Click Publish stores the site ID in the root note's frontmatter. Publishing the same root note again updates the existing site instead of creating a new link.
 
 ## Troubleshooting
 
 - Reload community plugins after installing or updating the plugin.
 - For a publish failure, enable **Debug mode**, retry once, and inspect the copyable Debug log.
 - For a deployment failure, confirm that Obsidian desktop can open the Cloudflare authorization flow and that the account permits Worker and D1 changes.
-- For a manual installation, confirm that `manifest.json` and `main.js` are directly inside `.obsidian/plugins/share-publisher/`.
+- For a manual installation, confirm that `manifest.json` and `main.js` are directly inside `.obsidian/plugins/one-click-publish/`.
 
 ## Links
 
-- [GitHub repository](https://github.com/jinhefeng/Obsidian-Publish-Note)
-- [Latest release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest)
+- [GitHub repository](https://github.com/jinhefeng/One-Click-Publish)
+- [Latest release](https://github.com/jinhefeng/One-Click-Publish/releases/latest)
 - [Author: Jin Hefeng](https://github.com/jinhefeng)
 - [MIT License](LICENSE)
 

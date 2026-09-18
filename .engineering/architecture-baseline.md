@@ -1,4 +1,4 @@
-# Architecture Baseline: Cloudflare-first Publish Note
+# Architecture Baseline: Cloudflare-first One-Click Publish
 
 ## Context
 

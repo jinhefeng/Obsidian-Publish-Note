@@ -1,8 +1,8 @@
-# Publish Note
+# One-Click Publish
 
 **语言 / Language:** 中文 | [English](README.md)
 
-通过你自己的 Cloudflare 账户，将当前 Obsidian Markdown 笔记发布为可分享的网站。Publish Note 可以携带链接笔记、上传引用的本地资源，并在再次发布时保持稳定链接。
+完成一次 Cloudflare 账户连接后，只需一次点击即可将当前 Obsidian Markdown 笔记发布为可分享的网站。One-Click Publish 可以携带链接笔记、上传引用的本地资源，并在再次发布时保持稳定链接。
 
 ## 插件功能
 
@@ -18,24 +18,24 @@
 
 ### 社区插件
 
-在 Obsidian 中打开**设置 → 社区插件 → 浏览**，搜索 **Publish Note**，安装后启用。
+在 Obsidian 中打开**设置 → 社区插件 → 浏览**，搜索 **One-Click Publish**，安装后启用。
 
 ### 手动安装
 
-从[最新 GitHub Release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest)下载 `manifest.json` 和 `main.js`，将两个文件放入：
+从[最新 GitHub Release](https://github.com/jinhefeng/One-Click-Publish/releases/latest)下载 `manifest.json` 和 `main.js`，将两个文件放入：
 
 ```text
-.obsidian/plugins/share-publisher/
+.obsidian/plugins/one-click-publish/
 ```
 
-然后打开**设置 → 社区插件**，启用 **Publish Note**。
+然后打开**设置 → 社区插件**，启用 **One-Click Publish**。
 
 ## 快速开始
 
-1. 在 Obsidian 桌面版打开**设置 → 社区插件 → Publish Note**。
-2. 点击**部署到我的 Cloudflare**，在 Cloudflare 中授权 Publish Note 应用。
+1. 在 Obsidian 桌面版打开**设置 → 社区插件 → One-Click Publish**。
+2. 点击**部署到我的 Cloudflare**，完成一次 Cloudflare 授权。
 3. 打开要发布的 Markdown 笔记。
-4. 从命令面板、功能区或笔记右键菜单选择 **Publish Note**。
+4. 从命令面板、功能区或笔记右键菜单选择 **One-Click Publish**。
 5. 打开自动复制的链接，或在笔记 frontmatter 中查看链接。
 
 首次部署会在你的 Cloudflare 账户中创建私有 Worker 和 D1 数据库。部署完成后，插件只在 Vault 中保存 Worker 地址和受限的 Publish Token；Cloudflare access token 只在内存中使用，完成部署后会撤销。
@@ -44,7 +44,7 @@
 
 ## 链接笔记与资源
 
-**引用页面深度**决定 Publish Note 跟随链接的范围：
+**引用页面深度**决定 One-Click Publish 跟随链接的范围：
 
 - `0`：只发布当前笔记。
 - `1`：包含当前笔记直接链接的页面。
@@ -71,19 +71,19 @@
 
 ## 更新已发布笔记
 
-Publish Note 会在根笔记 frontmatter 中保存站点 ID。再次发布同一个根笔记时，会更新原有网站，而不是创建新的链接。
+One-Click Publish 会在根笔记 frontmatter 中保存站点 ID。再次发布同一个根笔记时，会更新原有网站，而不是创建新的链接。
 
 ## 常见问题
 
 - 安装或更新插件后，请重新加载社区插件。
 - 发布失败时，开启**调试模式**，重试一次并查看可复制的调试日志。
 - 部署失败时，确认 Obsidian 桌面版可以打开 Cloudflare 授权流程，并且账户允许修改 Worker 和 D1。
-- 手动安装时，确认 `manifest.json` 和 `main.js` 直接位于 `.obsidian/plugins/share-publisher/` 中。
+- 手动安装时，确认 `manifest.json` 和 `main.js` 直接位于 `.obsidian/plugins/one-click-publish/` 中。
 
 ## 相关链接
 
-- [GitHub 仓库](https://github.com/jinhefeng/Obsidian-Publish-Note)
-- [最新 Release](https://github.com/jinhefeng/Obsidian-Publish-Note/releases/latest)
+- [GitHub 仓库](https://github.com/jinhefeng/One-Click-Publish)
+- [最新 Release](https://github.com/jinhefeng/One-Click-Publish/releases/latest)
 - [作者：Jin Hefeng](https://github.com/jinhefeng)
 - [MIT License](LICENSE)
 

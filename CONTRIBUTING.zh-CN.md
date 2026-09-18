@@ -1,4 +1,4 @@
-# 参与 Publish Note 开发
+# 参与 One-Click Publish 开发
 
 **语言 / Language:** 中文 | [English](CONTRIBUTING.md)
 
@@ -10,7 +10,7 @@
 - `plugin/main.js` 是自包含的 Obsidian 运行时入口。
 - `plugin/compiler.js` 是开发/参考编译器，运行时不会加载，也不会进入插件发布附件。
 - `src/`、`server/` 和 `tests/` 用于开发和发布基础设施，不是 Obsidian 安装文件。
-- 插件 ID 永久保持为 `share-publisher`；开发 Vault 的运行时目录是 `.obsidian/plugins/share-publisher/`。
+- 插件 ID 永久保持为 `one-click-publish`；开发 Vault 的运行时目录是 `.obsidian/plugins/one-click-publish/`。
 
 ## 环境要求
 
@@ -76,7 +76,7 @@ plugin/styles.css 存在时才包含 styles.css
 3. 执行必需的验证命令。
 4. 确认根目录镜像和 Release 暂存文件与 `plugin/` 源文件字节一致。
 5. 推送 `main`。
-6. 推送匹配的标签，例如 `0.2.25`。
+6. 推送匹配的标签，例如 `0.3.0`。
 7. 确认 GitHub Release 包含 `manifest.json` 和 `main.js`。
 
 插件正式发布后不要再修改插件 ID。修改 ID 会让 Obsidian 将其识别为另一个插件，并破坏正常更新链路。

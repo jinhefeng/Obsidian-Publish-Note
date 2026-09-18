@@ -223,7 +223,7 @@ test("personal resource names avoid every existing Worker and D1 name", () => {
   assert.deepEqual(JSON.parse(JSON.stringify(workerCollision)), { worker: "publish-note-account", d1: "publish-note" });
 });
 
-test("personal deployment reuses a recognized historical Publish Note D1 and reconnects its account", async () => {
+test("personal deployment reuses a recognized historical One-Click Publish D1 and reconnects its account", async () => {
   const calls: string[] = [];
   const requiredTables = [
     "accounts", "recovery_codes", "sessions", "tokens", "sites", "revisions", "objects", "object_chunks",

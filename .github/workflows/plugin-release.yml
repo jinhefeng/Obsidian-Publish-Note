@@ -1,4 +1,4 @@
-name: Publish Note plugin release
+name: One-Click Publish plugin release
 
 on:
   pull_request:

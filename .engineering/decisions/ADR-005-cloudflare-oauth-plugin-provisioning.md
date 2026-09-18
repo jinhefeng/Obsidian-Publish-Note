@@ -2,7 +2,7 @@
 
 ## Context
 
-Publish Note 同时支持官方托管和用户自己的 Cloudflare Worker。官方托管需要统一的账户、设备授权、Publish Token、配额和租户隔离；个人部署则要求数据和资源归用户所有，并且不应因为部署动作依赖项目方的 provisioning control plane。个人账户启用 R2 可能要求订阅，因此一键个人部署不能把 R2 作为前提。
+One-Click Publish 同时支持官方托管和用户自己的 Cloudflare Worker。官方托管需要统一的账户、设备授权、Publish Token、配额和租户隔离；个人部署则要求数据和资源归用户所有，并且不应因为部署动作依赖项目方的 provisioning control plane。个人账户启用 R2 可能要求订阅，因此一键个人部署不能把 R2 作为前提。
 
 ## Decision
 

@@ -137,7 +137,7 @@ export class ProvisioningService {
     if (accounts.length > 1) throw new ProvisioningError("MULTIPLE_ACCOUNTS", "Authorize one Cloudflare account at a time", 409);
     const account = accounts[0];
     const existing = await this.config.storage.getInstallation(account.id);
-    if (existing?.status === "ready") throw new ProvisioningError("ALREADY_PROVISIONED", "This Cloudflare account already has a Publish Note Worker", 409);
+    if (existing?.status === "ready") throw new ProvisioningError("ALREADY_PROVISIONED", "This Cloudflare account already has a One-Click Publish Worker", 409);
 
     const [d1Databases, r2Buckets, workerNames] = await Promise.all([
       this.config.cloudflare.listD1Databases(accessToken, account.id),
@@ -179,7 +179,7 @@ export class ProvisioningService {
     const response = await this.fetchImpl(`${serviceUrl}/__internal/provision/initialize`, { method: "POST", headers: { "content-type": "application/json", "x-publish-note-bootstrap-secret": secret }, body: JSON.stringify({ ownerKey, expiresAt, signature, tokenName: "Obsidian plugin" }) });
     let payload: any = {};
     try { payload = await response.json(); } catch { /* normalized below */ }
-    if (!response.ok || !payload.publishToken) throw new ProvisioningError("TARGET_INITIALIZATION_FAILED", "Publish Note Worker initialization failed", 502);
+    if (!response.ok || !payload.publishToken) throw new ProvisioningError("TARGET_INITIALIZATION_FAILED", "One-Click Publish Worker initialization failed", 502);
     return { accountId: String(payload.accountId || ""), publishToken: String(payload.publishToken) };
   }
 

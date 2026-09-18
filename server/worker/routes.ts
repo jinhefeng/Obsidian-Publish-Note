@@ -138,10 +138,10 @@ async function requireSession(context: WorkerContext): Promise<AuthContext> {
 
 async function connectPage(context: WorkerContext): Promise<Response> {
   const code = new URL(context.request.url).searchParams.get("code") || "";
-  if (!code) return html("Connect Publish Note", `<h1>Connect Publish Note</h1><p>This link is missing a device code.</p>`);
+  if (!code) return html("Connect One-Click Publish", `<h1>Connect One-Click Publish</h1><p>This link is missing a device code.</p>`);
   const session = await context.service.accountForSession(parseCookie(context.request.headers.get("cookie"), "pn_session"));
   const next = `/connect?code=${code}`;
-  if (!session) return html("Connect Publish Note", `<h1>Connect Publish Note</h1><p>Sign in before approving this Obsidian plugin connection.</p><p><a href="/login?next=${encodeURIComponent(next)}">Sign in</a> · <a href="/register?next=${encodeURIComponent(next)}">Create an account</a></p>`);
+  if (!session) return html("Connect One-Click Publish", `<h1>Connect One-Click Publish</h1><p>Sign in before approving this Obsidian plugin connection.</p><p><a href="/login?next=${encodeURIComponent(next)}">Sign in</a> · <a href="/register?next=${encodeURIComponent(next)}">Create an account</a></p>`);
   return html("Approve connection", `<h1>Approve connection</h1><p>Allow this Obsidian plugin to publish notes for <strong>${escapeHtml(session.account.email)}</strong>?</p><form method="post" action="/connect/approve"><input type="hidden" name="deviceCode" value="${escapeHtml(code)}">${formField("tokenName", "Token name", "text", false)}<button>Allow publishing</button></form>`);
 }
 

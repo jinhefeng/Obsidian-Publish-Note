@@ -1,12 +1,12 @@
 {
-  "name": "obsidian-publish-note",
-  "version": "0.2.25",
+  "name": "obsidian-one-click-publish",
+  "version": "0.3.0",
   "private": true,
-  "description": "Publish active Obsidian Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
+  "description": "One-click publishing for active Obsidian Markdown notes through your Cloudflare Worker.",
   "author": "Jin Hefeng",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jinhefeng/Obsidian-Publish-Note.git"
+    "url": "https://github.com/jinhefeng/One-Click-Publish.git"
   },
   "type": "module",
   "scripts": {

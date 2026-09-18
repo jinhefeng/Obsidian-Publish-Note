@@ -1,4 +1,4 @@
-# Integration Checklist: Cloudflare-first Publish Note
+# Integration Checklist: Cloudflare-first One-Click Publish
 
 ## Contract gate
 

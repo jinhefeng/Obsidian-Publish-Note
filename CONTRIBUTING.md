@@ -1,4 +1,4 @@
-# Contributing to Publish Note
+# Contributing to One-Click Publish
 
 **Language / 语言:** English | [中文](CONTRIBUTING.zh-CN.md)
 
@@ -10,7 +10,7 @@ This document is for maintainers and contributors. For the user-facing plugin gu
 - `plugin/main.js` is the self-contained Obsidian runtime entry point.
 - `plugin/compiler.js` is a development/reference compiler and is not loaded by the runtime or shipped as a plugin asset.
 - `src/`, `server/`, and `tests/` support development and publishing infrastructure; they are not Obsidian installation files.
-- The plugin ID is permanently `share-publisher`; the development Vault runtime directory is `.obsidian/plugins/share-publisher/`.
+- The plugin ID is permanently `one-click-publish`; the development Vault runtime directory is `.obsidian/plugins/one-click-publish/`.
 
 ## Prerequisites
 
@@ -76,7 +76,7 @@ Before pushing a release:
 3. Run the required validation commands.
 4. Confirm root mirrors and release staging are byte-identical to `plugin/` sources.
 5. Push `main`.
-6. Push the matching tag, for example `0.2.25`.
+6. Push the matching tag, for example `0.3.0`.
 7. Confirm the GitHub Release contains `manifest.json` and `main.js`.
 
 Never change the plugin ID after a public release. An ID change creates a different Obsidian plugin and breaks the normal update path.
