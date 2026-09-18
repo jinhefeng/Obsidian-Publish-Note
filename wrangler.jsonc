@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "publish-note",
+  "main": "server/worker/index.ts",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "vars": {
+    "PUBLIC_BASE_URL": ""
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "publish-note",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "server/storage/migrations"
+    }
+  ]
+}

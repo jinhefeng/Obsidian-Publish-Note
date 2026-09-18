@@ -1,14 +1,28 @@
-# Publish Note — local install
+# Publish Note — plugin
 
 **Language / 语言:** English | [中文](README.zh-CN.md)
 
-This folder contains the current development plugin artifact. It is not yet a production release.
+This folder contains the current development plugin artifact. The supported personal path publishes through a Cloudflare Worker and D1 in the user's Cloudflare account; the local in-memory server is only a test substitute.
 
 The installable entry point is self-contained: `manifest.json` and `main.js` are the runtime files loaded by Obsidian. `compiler.js` remains a readable development reference.
 
-## Install and test
+## Connect and publish
 
-1. Start the local publishing backend:
+To stop using the connection in this Vault, click **Disconnect from my Cloudflare** in settings. This removes only the saved Worker URL and Publish Token from the Vault; it does not delete Cloudflare resources, published sites, or connections on other devices.
+
+The current settings page provides **Deploy to my Cloudflare**. The official Publish Note connection is planned and is not an active settings action in this release; legacy official-service fields remain readable for compatibility. For a personal Worker, click **Deploy to my Cloudflare** on Obsidian desktop and authorize the public Cloudflare OAuth application. The plugin then creates the Worker, D1 migration, first internal account, and Publish Token directly in your account. Personal content is stored in D1 BLOB chunks, so no R2 bucket or subscription is needed. The Cloudflare access token is used in memory only and revoked after deployment; only the Worker URL and scoped Publish Token are saved. The direct setup does not ask for an email, password, recovery code, or a user-provided OAuth client.
+
+Deploy once on desktop, then include this plugin's settings when syncing your Vault to your phone. Syncing only notes does not transfer the connection. Synced settings load automatically; desktop and mobile can publish and update without another Cloudflare authorization, even with the desktop computer off. Selecting a saved connection never deploys again. Deploy Button, Wrangler, and `/setup` remain advanced fallbacks.
+
+Deployment progress is local to the running device and does not overwrite a usable connection. Failed setup reports its stage, with sanitized technical details available in settings. Unconfirmed writes are not automatically repeated. Customers do not need commands or their own OAuth client.
+
+For troubleshooting, enable **Debug mode** in settings before retrying. The copyable **Debug log** includes sanitized deployment and publishing request/response details such as phase, route template, status, internal/provider codes, safe external messages, retry attempt, and duration. It never stores credentials, request bodies, or note content.
+
+The direct personal setup does not expose the service's account registration or recovery screens. Advanced self-hosted account management remains available through the Worker console when using the fallback `/setup` and account routes.
+
+## Local install and test
+
+1. Start the local publishing test backend:
 
    ```bash
    npm run dev:server
@@ -24,18 +38,23 @@ The installable entry point is self-contained: `manifest.json` and `main.js` are
 
 3. In Obsidian, open **Settings → Community plugins** and enable **Publish Note**.
 
-4. Open a Markdown note and choose **Publish Note** from the command palette, ribbon upload icon, or note context menu.
+4. The normal settings page does not expose service credentials. For a local backend smoke test, temporarily seed the plugin data with `apiBaseUrl: "http://127.0.0.1:8787"`, `publishToken: "dev-token"`, `selfPublishToken: "dev-token"`, `deploymentWorkerUrl: "http://127.0.0.1:8787"`, `deploymentManaged: true`, and `cloudflareMode: "self"`, then open a Markdown note and choose **Publish Note** from the command palette, ribbon upload icon, or note context menu.
 
-5. The published URL is copied automatically. The root page is `index.html`; linked pages use `page-1.html`, `page-2.html`, and so on.
+5. The published URL is copied automatically. The root page is `index.html`; linked pages use `page-1.html`, `page-2.html`, and so on. Pages and assets upload in chunks before the new revision is committed.
 
 ## Settings
 
 The settings page defaults to English. Use **Language** to switch the settings page to Chinese.
 
-- **Service URL**: publishing service endpoint.
-- **Access token**: authentication token for the service.
-- **Linked note depth**: `0` publishes only the current note; larger values include more linked notes.
+- **Deploy to my Cloudflare**: first-time setup runs on desktop. Once connected, the same option selects the saved personal connection on desktop or mobile without redeploying.
+- **Official Cloudflare connection**: planned; it is not exposed as an active settings action in this release.
+- **Service URL / Publish Token**: are managed internally after personal deployment; normal settings no longer ask the user to enter them.
+- **Linked page depth**: `0` publishes only the current note; `1` includes direct links; larger values include deeper linked pages.
 - **Use Obsidian renderer**: preserves Obsidian styling and installed Markdown plugin output.
+- **Debug mode**: when enabled, records detailed, sanitized deployment and publishing diagnostics for troubleshooting; when disabled, the settings page hides the log panels.
+- **After publishing**: the root note stores `share_site_id`, `share_link`, and `share_updated` in frontmatter so later updates can keep the same site.
+
+External URLs, `mailto:` links, anchors, and external assets stay unchanged and are not traversed.
 
 ## Project links
 

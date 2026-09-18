@@ -1,0 +1,9 @@
+CF_OAUTH_CLIENT_ID=replace-with-cloudflare-oauth-client-id
+CF_OAUTH_CLIENT_SECRET=replace-with-cloudflare-oauth-client-secret
+CF_OAUTH_REDIRECT_URI=http://localhost:8788/oauth/cloudflare/callback
+PROVISIONER_PUBLIC_URL=http://localhost:8788
+PROVISIONER_ENCRYPTION_KEY=replace-with-a-random-32-byte-secret
+TARGET_WORKER_BUNDLE_URL=http://localhost:8789/target-worker/index.js
+TARGET_MIGRATION_URL=http://localhost:8789/target-worker/0001_initial.sql
+PROVISIONER_RESOURCE_PREFIX=publish-note
+CF_OAUTH_SCOPE=account-settings.read workers-scripts.write d1.write workers-r2.write

@@ -1,5 +1,5 @@
 export function normalizeLinkedPageDepth(value: unknown, fallback = 1): number {
-  const parsed = Number(value);
+  const parsed = typeof value === "string" && value.trim() === "" ? Number.NaN : Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
 }
 

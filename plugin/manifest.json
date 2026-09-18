@@ -1,9 +1,9 @@
 {
   "id": "share-publisher",
   "name": "Publish Note",
-  "version": "0.1.6",
+  "version": "0.2.18",
   "minAppVersion": "1.5.0",
-  "description": "Publish Markdown notes and their linked pages as shareable websites.",
+  "description": "Publish active Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
   "author": "Jin Hefeng",
   "authorUrl": "https://github.com/jinhefeng",
   "isDesktopOnly": false

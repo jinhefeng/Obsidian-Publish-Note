@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import test from "node:test";
 import { createLocalPublishServer } from "../scripts/local-publish-server.ts";
 import { compileNote, compileShare } from "../src/compiler/site-compiler.ts";
@@ -36,6 +38,32 @@ test("publishes a note and serves it through the site URL", () => {
   assert.match(response.body, /<header class="page-title"><h1>Getting Started<\/h1><\/header>/);
   assert.match(response.body, /<strong>published<\/strong>/);
   assert.match(response.body, /href="\.\/page-1\.html"/);
+});
+
+test("plugin exposes direct desktop Cloudflare deployment while keeping official connection out of settings", () => {
+  const source = readFileSync(new URL("../plugin/main.js", import.meta.url), "utf8");
+  assert.match(source, /Deploy to my Cloudflare/);
+  assert.match(source, /部署到我的 Cloudflare/);
+  assert.match(source, /cloudflareMode/);
+  assert.match(source, /Authorization Code/);
+  assert.match(source, /CLOUDFLARE_OAUTH_REDIRECT_URI/);
+  assert.match(source, /127\.0\.0\.1/);
+  assert.match(source, /desktopDeploymentOnly/);
+  assert.match(source, /provisionPersonalCloudflare/);
+  assert.match(source, /async disconnectCloudflare\(\)/);
+  assert.match(source, /copy\.disconnectCloudflare/);
+  assert.match(source, /deploymentWorkerUrl: ""/);
+  assert.match(source, /if \(hasPersonal\) cloudflareSetting\.addButton/);
+  assert.doesNotMatch(source, /\.setName\(copy\.connectOfficialCloudflare\)/);
+  assert.match(source, /if \(this\.plugin\.settings\.debugMode && deploymentLogs\.length\)/);
+  assert.match(source, /if \(this\.plugin\.settings\.debugMode\) \{/);
+  assert.ok(source.indexOf(".setName(copy.debugMode)") > source.indexOf(".setName(copy.nativeRenderer)"));
+  assert.ok(source.indexOf(".setName(copy.debugMode)") < source.indexOf(".setName(copy.repository)"));
+  assert.match(source, /deploymentManaged/);
+  assert.doesNotMatch(source, /\/v1\/cloudflare\/provision\//);
+  assert.doesNotMatch(source, /\.setName\(copy\.serviceUrl\)/);
+  assert.doesNotMatch(source, /\.setName\(copy\.accessToken\)/);
+  assert.doesNotMatch(source, /CF_API_TOKEN|CF_OAUTH_CLIENT_SECRET|clientSecret/);
 });
 
 test("retries are idempotent and updates keep the same site URL", () => {
@@ -105,7 +133,7 @@ test("uploads pages and assets as queued chunks before atomically committing", (
       sourcePath: "assets/large.bin",
       path: "assets/large.bin",
       contentType: "application/octet-stream",
-      body: "1234567890",
+      body: "MTIzNDU2Nzg5MA==",
       encoding: "base64",
     }],
   });
@@ -117,16 +145,23 @@ test("uploads pages and assets as queued chunks before atomically committing", (
     sourcePath: bundle.sourcePath,
     title: bundle.title,
     chunkCount: chunks.length,
+    chunkProtocolVersion: 2,
+    objectCount: bundle.pages.length + bundle.assets.length,
+    totalBytes: chunks.reduce((total, chunk) => total + chunk.byteLength, 0),
   });
 
-  for (const chunk of chunks) publisher.uploadChunk({ uploadId: upload.uploadId, ...chunk });
+  for (const [index, chunk] of chunks.entries()) {
+    const uploaded = publisher.uploadChunk({ uploadId: upload.uploadId, ...chunk });
+    assert.equal(uploaded.receivedChunks, chunk.chunkIndex + 1);
+    assert.deepEqual(publisher.uploadChunk({ uploadId: upload.uploadId, ...chunk }), uploaded);
+  }
   const result = publisher.commitUpload({ uploadId: upload.uploadId });
   const retry = publisher.commitUpload({ uploadId: upload.uploadId });
 
   assert.deepEqual(retry, result);
   assert.deepEqual(result.uploadedPaths, ["assets/large.bin", "index.html"]);
   assert.match(serveLocalSite(publisher, result.siteId).body, /Queued/);
-  assert.equal(publisher.getCurrentObject(result.siteId, "assets/large.bin")?.body, "1234567890");
+  assert.equal(publisher.getCurrentObject(result.siteId, "assets/large.bin")?.body, "MTIzNDU2Nzg5MA==");
 });
 
 test("exposes the queued upload lifecycle through the local HTTP API", async () => {
@@ -153,6 +188,9 @@ test("exposes the queued upload lifecycle through the local HTTP API", async () 
       sourcePath: bundle.sourcePath,
       title: bundle.title,
       chunkCount: chunks.length,
+      chunkProtocolVersion: 2,
+      objectCount: bundle.pages.length + bundle.assets.length,
+      totalBytes: chunks.reduce((total, chunk) => total + chunk.byteLength, 0),
     });
     assert.equal(started.response.status, 200);
     for (const chunk of chunks) {
@@ -184,6 +222,9 @@ test("keeps the previous revision when a queued upload is incomplete", () => {
     sourcePath: updateBundle.sourcePath,
     title: updateBundle.title,
     chunkCount: chunks.length,
+    chunkProtocolVersion: 2,
+    objectCount: updateBundle.pages.length + updateBundle.assets.length,
+    totalBytes: chunks.reduce((total, chunk) => total + chunk.byteLength, 0),
   });
 
   publisher.uploadChunk({ uploadId: upload.uploadId, ...chunks[0] });
@@ -197,10 +238,125 @@ test("normalizes linked-page depth with direct-link semantics", () => {
   assert.equal(normalizeLinkedPageDepth("0"), 0);
   assert.equal(normalizeLinkedPageDepth("3"), 3);
   assert.equal(normalizeLinkedPageDepth("invalid"), 1);
+  assert.equal(normalizeLinkedPageDepth(""), 1);
   assert.equal(shouldFollowLinkedPage(0, 1), true);
   assert.equal(shouldFollowLinkedPage(1, 1), false);
   assert.equal(shouldFollowLinkedPage(2, 3), true);
   assert.equal(shouldFollowLinkedPage(0, 0), false);
+});
+
+test("traverses linked notes only through the configured depth and ignores external Markdown URLs", async () => {
+  const pluginModule = { exports: {} };
+  const obsidian = {
+    Plugin: class { constructor(app) { this.app = app; } },
+    Notice: class {},
+    PluginSettingTab: class {},
+    Setting: class {},
+    requestUrl: async () => ({ status: 200, json: {} }),
+    openExternal: () => {},
+    MarkdownRenderer: {},
+    Component: class {},
+  };
+  const pluginSource = readFileSync(new URL("../plugin/main.js", import.meta.url), "utf8");
+  vm.runInNewContext(`(function(require, module, exports) {\n${pluginSource}\n})(require, module, module.exports);`, {
+    require: (request) => {
+      if (request === "obsidian") return obsidian;
+      throw new Error(`Unexpected plugin dependency: ${request}`);
+    },
+    module: pluginModule,
+    console,
+  });
+  const PluginClass = pluginModule.exports;
+
+  const markdown = {
+    "Notes/A.md": "[[B]] [external](https://example.com/C.md)",
+    "Notes/B.md": "[[C]] [[A]]",
+    "Notes/C.md": "[[D]]",
+    "Notes/D.md": "",
+  };
+  const files = new Map(Object.keys(markdown).map((filePath) => {
+    const basename = filePath.split("/").pop().replace(/\.md$/i, "");
+    return [filePath, { path: filePath, basename, extension: "md", parent: { path: "Notes" } }];
+  }));
+  const resolve = (reference) => {
+    const clean = reference.replace(/\.md$/i, "");
+    return files.get(`Notes/${clean}.md`) || [...files.values()].find((file) => file.basename.toLowerCase() === clean.toLowerCase()) || null;
+  };
+  const app = {
+    metadataCache: {
+      getFileCache: () => ({ links: [] }),
+      getFirstLinkpathDest: (reference) => resolve(reference),
+    },
+    vault: {
+      read: async (file) => markdown[file.path],
+      getAbstractFileByPath: (filePath) => files.get(filePath) || null,
+    },
+  };
+  const plugin = new PluginClass(app, {});
+  const root = files.get("Notes/A.md");
+
+  const loadSettings = async (stored) => {
+    const instance = new PluginClass(app, {});
+    instance.loadData = async () => stored;
+    await instance.loadSettings();
+    return instance.settings;
+  };
+  assert.equal((await loadSettings({})).cloudflareMode, "self");
+  assert.equal((await loadSettings({})).apiBaseUrl, "");
+  assert.equal((await loadSettings({})).publishToken, "");
+  assert.equal((await loadSettings({})).linkedPageDepth, 1);
+  assert.equal((await loadSettings({ includeLinkedPages: false })).linkedPageDepth, 0);
+  assert.equal((await loadSettings({ includeLinkedPages: true })).linkedPageDepth, 1);
+  assert.equal((await loadSettings({ linkedPageDepth: 3 })).linkedPageDepth, 3);
+
+  let savedAfterDisconnect;
+  plugin.settings = { language: "en" };
+  plugin.loadData = async () => ({
+    cloudflareMode: "self",
+    deploymentManaged: true,
+    apiBaseUrl: "https://publish.example.workers.dev",
+    serviceUrl: "https://publish.example.workers.dev",
+    publishToken: "pn_legacy-token",
+    selfPublishToken: "pn_saved-token",
+    deploymentWorkerUrl: "https://publish.example.workers.dev",
+    lastPublishedUrl: "https://publish.example.workers.dev/s/site-id/",
+  });
+  plugin.saveData = async (value) => { savedAfterDisconnect = value; };
+  await plugin.disconnectCloudflare();
+  assert.equal(savedAfterDisconnect.deploymentWorkerUrl, "");
+  assert.equal(savedAfterDisconnect.selfPublishToken, "");
+  assert.equal(savedAfterDisconnect.publishToken, "");
+  assert.equal(savedAfterDisconnect.lastPublishedUrl, "https://publish.example.workers.dev/s/site-id/");
+  assert.equal(JSON.parse(savedAfterDisconnect.connectionProfiles).self, null);
+
+  for (const [depth, expected] of [[0, ["A"]], [1, ["A", "B"]], [2, ["A", "B", "C"]], [3, ["A", "B", "C", "D"]]]) {
+    plugin.settings = { linkedPageDepth: depth };
+    const notes = await plugin.collectShareNotes(root, markdown[root.path]);
+    assert.equal(notes.map((note) => note.title).join("|"), expected.join("|"));
+    assert.equal(new Set(notes.map((note) => note.sourcePath)).size, notes.length);
+  }
+});
+
+test("preserves external links, anchors, and external assets in the published HTML", () => {
+  const bundle = compileShare({
+    root: {
+      sourcePath: "Notes/External.md",
+      markdown: [
+        "[Guide](https://example.com/guide.md)",
+        "[Mail](mailto:hello@example.com)",
+        "[Section](#details)",
+        "![Logo](https://cdn.example.com/logo.png)",
+      ].join("\n\n"),
+    },
+  });
+  const html = bundle.pages[0].body;
+
+  assert.equal(bundle.pages.length, 1);
+  assert.match(html, /href="https:\/\/example\.com\/guide\.md"/);
+  assert.match(html, /href="mailto:hello@example\.com"/);
+  assert.match(html, /href="#details"/);
+  assert.match(html, /src="https:\/\/cdn\.example\.com\/logo\.png"/);
+  assert.doesNotMatch(html, /internal-link-unpublished/);
 });
 
 test("renders Obsidian callouts, tables, tasks, embeds, and local assets", () => {

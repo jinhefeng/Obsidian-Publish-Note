@@ -1,8 +1,8 @@
 {
   "name": "obsidian-publish-note",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "private": true,
-  "description": "Publish Markdown notes and linked pages as shareable websites for Obsidian.",
+  "description": "Publish active Obsidian Markdown notes and linked pages to a shareable website through your Cloudflare Worker.",
   "author": "Jin Hefeng",
   "repository": {
     "type": "git",
@@ -10,11 +10,36 @@
   },
   "type": "module",
   "scripts": {
-    "test": "node --experimental-strip-types --test tests/publish-flow.test.ts",
+    "test": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.ts",
     "demo": "node --experimental-strip-types scripts/demo-publish.ts",
-    "dev:server": "node --experimental-strip-types scripts/local-publish-server.ts",
+    "dev:server": "./start.sh start",
+    "start": "./start.sh start",
+    "stop": "./start.sh stop",
+    "restart": "./start.sh restart",
+    "status": "./start.sh status",
+    "logs": "./start.sh logs",
+    "check:worker": "node --experimental-strip-types --input-type=module -e \"await import('./server/worker/index.ts')\"",
+    "check:provisioner": "node --experimental-strip-types --input-type=module -e \"await import('./server/provisioner/index.ts')\"",
+    "build:target-worker": "node scripts/build-target-worker.mjs",
+    "cf:dev": "npx wrangler dev",
+    "cf:deploy": "npx wrangler deploy",
+    "cf:migrate:local": "npx wrangler d1 migrations apply DB --local",
+    "cf:migrate:remote": "npx wrangler d1 migrations apply DB --remote",
+    "cf:provisioner:dev": "npx wrangler dev --config wrangler.provisioner.jsonc",
+    "cf:provisioner:deploy": "npx wrangler deploy --config wrangler.provisioner.jsonc",
+    "cf:provisioner:migrate:local": "npx wrangler d1 migrations apply publish-note-provisioning --local --config wrangler.provisioner.jsonc",
+    "cf:provisioner:migrate:remote": "npx wrangler d1 migrations apply publish-note-provisioning --remote --config wrangler.provisioner.jsonc",
+    "deploy": "npm run cf:migrate:remote && npx wrangler deploy",
     "check:plugin": "node scripts/check-plugin.mjs",
+    "build:plugin": "node scripts/build-plugin.mjs",
     "sync:plugin": "node scripts/sync-plugin.mjs",
-    "update:plugin": "npm run check:plugin && npm run sync:plugin"
+    "update:plugin": "npm run build:plugin && npm run check:plugin && npm run sync:plugin"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": { "description": "D1 database for account, token, upload, site metadata, and personal-deployment content chunks." },
+      "BOOTSTRAP_SECRET": { "description": "One-time secret used at /setup to create the first self-hosted account." },
+      "PUBLIC_BASE_URL": { "description": "Optional public URL used when generating /s/{siteId} links; leave empty to use the Worker URL." }
+    }
   }
 }

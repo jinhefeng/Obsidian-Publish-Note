@@ -1,4 +1,5 @@
 export type PublishEncoding = "utf8" | "base64";
+export type PublishChunkProtocolVersion = 2;
 
 export interface PublishPage {
   path: string;
@@ -32,9 +33,12 @@ export interface PublishUploadStartRequest {
   siteId?: string;
   idempotencyKey: string;
   formatVersion: 1;
+  chunkProtocolVersion: PublishChunkProtocolVersion;
   sourcePath: string;
   title: string;
   chunkCount: number;
+  objectCount: number;
+  totalBytes: number;
 }
 
 export interface PublishUploadStartResult {
@@ -44,12 +48,14 @@ export interface PublishUploadStartResult {
 }
 
 export interface PublishUploadChunk {
+  chunkProtocolVersion: PublishChunkProtocolVersion;
   kind: "page" | "asset";
   path: string;
   contentType: string;
   encoding: PublishEncoding;
   chunkIndex: number;
   chunkCount: number;
+  byteLength: number;
   body: string;
 }
 

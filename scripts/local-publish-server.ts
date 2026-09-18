@@ -3,8 +3,9 @@ import { InMemoryPublisher } from "../src/publish/in-memory-publisher.ts";
 import { serveLocalSite } from "../src/publish/local-viewer.ts";
 
 const port = Number(process.env.SHARE_PORT || 8787);
+const host = process.env.SHARE_HOST || "127.0.0.1";
 const token = process.env.SHARE_DEV_TOKEN || "dev-token";
-const baseUrl = process.env.SHARE_BASE_URL || `http://127.0.0.1:${port}`;
+const baseUrl = process.env.SHARE_BASE_URL || `http://${host}:${port}`;
 const defaultMaxBodyBytes = Number(process.env.SHARE_MAX_BODY_BYTES || 100_000_000);
 
 function readJson(request, maxBodyBytes = defaultMaxBodyBytes) {
@@ -154,7 +155,16 @@ export function createLocalPublishServer(options = {}) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { server } = createLocalPublishServer();
-  server.listen(port, "127.0.0.1", () => {
+  server.on("error", (error) => {
+    if (error?.code === "EADDRINUSE") {
+      console.error(`Publish Note server cannot start: ${host}:${port} is already in use.`);
+      console.error("Use ./start.sh status to inspect the existing service, or ./start.sh restart to restart this project service.");
+    } else {
+      console.error("Publish Note server failed:", error);
+    }
+    process.exitCode = 1;
+  });
+  server.listen(port, host, () => {
     console.log(`Local publish server listening at ${baseUrl}`);
     console.log(`Development token: ${token}`);
   });

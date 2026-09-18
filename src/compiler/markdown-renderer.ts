@@ -43,6 +43,15 @@ function encodePath(value: string): string {
   return value.split("/").map((part) => encodeURIComponent(part)).join("/");
 }
 
+function isExternalUrl(value: string): boolean {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(value.trim());
+}
+
+function isExternalReference(value: string): boolean {
+  const trimmed = value.trim();
+  return trimmed.startsWith("#") || isExternalUrl(trimmed);
+}
+
 function relativeHref(fromPagePath: string, targetPagePath: string): string {
   const fromParts = fromPagePath.split("/");
   fromParts.pop();
@@ -78,6 +87,7 @@ function resolveRelativeSourcePath(target: string, currentSourcePath?: string): 
 }
 
 function resolvePageHref(target: string, context: MarkdownRenderContext): string | undefined {
+  if (isExternalReference(target)) return target.trim();
   const [rawTarget, rawAnchor] = target.split("#", 2);
   const resolvedTarget = resolveRelativeSourcePath(rawTarget, context.currentSourcePath);
   const targetKey = normalizeSourcePath(resolvedTarget);
@@ -91,12 +101,12 @@ function resolvePageHref(target: string, context: MarkdownRenderContext): string
 
 function resolveMarkdownLinkHref(href: string, context: MarkdownRenderContext): string | undefined {
   const trimmed = href.trim();
-  if (!/\.md(?:#|$)/i.test(trimmed)) return trimmed;
+  if (isExternalReference(trimmed) || !/\.md(?:#|$)/i.test(trimmed)) return trimmed;
   return resolvePageHref(trimmed.replace(/\.md(?=#|$)/i, ""), context);
 }
 
 function resolveAssetPath(sourcePath: string, context: MarkdownRenderContext): string {
-  if (/^(?:[a-z]+:)?\/\//i.test(sourcePath) || sourcePath.startsWith("data:")) {
+  if (isExternalUrl(sourcePath)) {
     return sourcePath;
   }
   const assetPath = sourcePathVariants(sourcePath).map((key) => context.assetPaths?.get(key)).find(Boolean);

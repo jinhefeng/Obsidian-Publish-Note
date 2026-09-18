@@ -8,7 +8,8 @@ This file records the durable project requirements that apply to future developm
 - Author: `Jin Hefeng`.
 - Obsidian plugin ID: `share-publisher`.
 - Keep the plugin ID and the Vault folder name `.obsidian/plugins/share-publisher/` stable for compatibility with existing installations.
-- Current plugin baseline: `0.1.6`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for user-visible plugin changes.
+- Current plugin baseline: `0.2.16`. The source of truth for the plugin version is `plugin/manifest.json`; bump it for every user-visible plugin change, including settings UI, diagnostics, behavior, and packaging changes.
+- Versioning feedback is mandatory: announce the new plugin version in the working-session commentary when starting a plugin update and repeat it in the final response. Never report a plugin update as complete without stating the version.
 - GitHub repository: [jinhefeng/Obsidian-Publish-Note](https://github.com/jinhefeng/Obsidian-Publish-Note).
 - Git remote: `origin` must point to `https://github.com/jinhefeng/Obsidian-Publish-Note.git`.
 
@@ -21,7 +22,7 @@ This file records the durable project requirements that apply to future developm
 - The settings page should begin with a moderately detailed explanation of what Publish Note does: it publishes the active Markdown note as a shareable website, can include linked notes, uploads referenced local assets, and copies a stable link after publishing.
 - Keep the project repository link at the bottom of the settings page.
 - The settings page must contain a language selector with English as the default and Chinese as the alternative. Display one language at a time; do not concatenate Chinese and English into the same setting label or description.
-- Keep settings focused on service and content configuration: language, service URL, access token, linked-note depth, and Obsidian renderer behavior.
+- Keep settings focused on deploying to the user's Cloudflare, plus language, linked-note depth, Obsidian renderer behavior, and optional Debug mode. The official Cloudflare connection remains planned and must not appear as an active settings action. Do not expose service URL or Publish Token fields in the normal settings page.
 
 ## Documentation and language policy
 
@@ -39,7 +40,8 @@ This file records the durable project requirements that apply to future developm
 - Store the settings language as `language: "en"` or `language: "zh"`; normalize unknown or missing values to English.
 - Use the language-specific copy map for settings labels, descriptions, and notices. Keep the context-menu command exactly `Publish Note` as required above.
 - Preserve the existing publishing behavior: the active note is the share root, linked-note depth controls traversal, referenced local assets are uploaded, and successful publishing stores `share_site_id`, `share_link`, and `share_updated` frontmatter.
-- The local publishing service is an in-memory development service. Do not describe it as production hosting; Cloudflare Worker/R2/D1 integration remains future work.
+- The local publishing service is an in-memory development service. Do not describe it as production hosting. The official hosted path may use Cloudflare Worker/R2/D1 and uses the official Publish Note control plane. Personal deployment runs directly from Obsidian desktop through Cloudflare OAuth/API and uses only Worker/D1 BLOB storage: it must not request, create, or require R2. Deploy Button, Wrangler, and manual `/setup` remain advanced fallbacks.
+- Use `start.sh` (or the `npm run dev:server`, `start`, `stop`, `restart`, `status`, and `logs` wrappers) for local service lifecycle management; every `start` must force-stop processes listening on the configured port and launch a fresh project service.
 - Do not change stable URL semantics without updating the compiler, publish service, tests, README files, and `Task Constitution.md` together.
 
 ## Git workflow
@@ -68,6 +70,8 @@ After changing `plugin/main.js` or `plugin/manifest.json`, run:
 ```bash
 npm run update:plugin
 ```
+
+Every user-visible plugin update must bump `plugin/manifest.json` before running this command. The command is a developer packaging/synchronization step; plugin users must never be instructed to run it.
 
 Then reload `Publish Note` in Obsidian and perform a real plugin smoke test when the task requires runtime verification.
 

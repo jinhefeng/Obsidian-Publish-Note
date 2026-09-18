@@ -36,6 +36,15 @@ function encodePath(value) {
   return value.split("/").map((part) => encodeURIComponent(part)).join("/");
 }
 
+function isExternalUrl(value) {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(value.trim());
+}
+
+function isExternalReference(value) {
+  const trimmed = value.trim();
+  return trimmed.startsWith("#") || isExternalUrl(trimmed);
+}
+
 function relativeHref(fromPagePath, targetPagePath) {
   const fromParts = fromPagePath.split("/");
   fromParts.pop();
@@ -70,6 +79,7 @@ function resolveRelativeSourcePath(target, currentSourcePath) {
 }
 
 function resolvePageHref(target, context) {
+  if (isExternalReference(target)) return target.trim();
   const [rawTarget, rawAnchor] = target.split("#", 2);
   const resolvedTarget = resolveRelativeSourcePath(rawTarget, context.currentSourcePath);
   const targetKey = normalizeSourcePath(resolvedTarget);
@@ -83,12 +93,12 @@ function resolvePageHref(target, context) {
 
 function resolveMarkdownLinkHref(href, context) {
   const trimmed = href.trim();
-  if (!/\.md(?:#|$)/i.test(trimmed)) return trimmed;
+  if (isExternalReference(trimmed) || !/\.md(?:#|$)/i.test(trimmed)) return trimmed;
   return resolvePageHref(trimmed.replace(/\.md(?=#|$)/i, ""), context);
 }
 
 function resolveAssetPath(sourcePath, context) {
-  if (/^(?:[a-z]+:)?\/\//i.test(sourcePath) || sourcePath.startsWith("data:")) return sourcePath;
+  if (isExternalUrl(sourcePath)) return sourcePath;
   const assetPath = sourcePathVariants(sourcePath).map((key) => context.assetPaths?.get(key)).find(Boolean);
   if (assetPath) return context.currentPagePath ? relativeHref(context.currentPagePath, assetPath) : `./${encodePath(assetPath)}`;
   return `./${encodePath(`assets/${basename(sourcePath)}`)}`;

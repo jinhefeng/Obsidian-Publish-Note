@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "publish-note-provisioner",
+  "main": "server/provisioner/index.ts",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "publish-note-provisioning",
+      "database_id": "REPLACE_WITH_PROVISIONING_D1_DATABASE_ID",
+      "migrations_dir": "server/provisioner/migrations"
+    }
+  ],
+  "vars": {
+    "CF_OAUTH_CLIENT_ID": "REPLACE_WITH_CLOUDFLARE_OAUTH_CLIENT_ID",
+    "CF_OAUTH_REDIRECT_URI": "https://REPLACE_WITH_PROVISIONER_HOST/oauth/cloudflare/callback",
+    "PROVISIONER_PUBLIC_URL": "https://REPLACE_WITH_PROVISIONER_HOST",
+    "TARGET_WORKER_BUNDLE_URL": "https://REPLACE_WITH_ASSET_HOST/target-worker/index.js",
+    "TARGET_MIGRATION_URL": "https://REPLACE_WITH_ASSET_HOST/target-worker/0001_initial.sql",
+    "PROVISIONER_RESOURCE_PREFIX": "publish-note",
+    "CF_OAUTH_SCOPE": "account-settings.read workers-scripts.write d1.write workers-r2.write"
+  }
+}

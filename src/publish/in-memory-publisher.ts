@@ -12,6 +12,7 @@ import type {
   SiteRecord,
 } from "../shared/contracts.ts";
 import { normalizeRelativePath, siteUrl } from "../shared/paths.ts";
+import { decodePublishedText, decodeUploadChunk, encodePublishedBytes } from "../shared/upload-queue.ts";
 
 interface StoredSite {
   record: SiteRecord;
@@ -24,7 +25,7 @@ interface UploadObject {
   contentType: string;
   encoding: "utf8" | "base64";
   chunkCount: number;
-  chunks: Map<number, string>;
+  chunks: Map<number, Uint8Array>;
 }
 
 interface UploadSession {
@@ -34,6 +35,10 @@ interface UploadSession {
   sourcePath: string;
   title: string;
   formatVersion: 1;
+  chunkProtocolVersion: 2;
+  expectedChunkCount: number;
+  expectedObjectCount: number;
+  expectedBytes: number;
   objects: Map<string, UploadObject>;
   result?: PublishResult;
 }
@@ -79,6 +84,10 @@ export class InMemoryPublisher {
       sourcePath: request.sourcePath,
       title: request.title,
       formatVersion: request.formatVersion,
+      chunkProtocolVersion: request.chunkProtocolVersion,
+      expectedChunkCount: request.chunkCount,
+      expectedObjectCount: request.objectCount,
+      expectedBytes: request.totalBytes,
       objects: new Map(),
     });
     return { ...result };
@@ -87,6 +96,7 @@ export class InMemoryPublisher {
   uploadChunk(request: PublishUploadChunkRequest): PublishUploadChunkResult {
     const session = this.uploads.get(request.uploadId);
     if (!session) throw new Error("Unknown upload session");
+    if (request.chunkProtocolVersion !== 2) throw new Error("Unsupported upload chunk protocol");
     if (request.kind !== "page" && request.kind !== "asset") {
       throw new Error("Upload chunk kind must be page or asset");
     }
@@ -118,11 +128,12 @@ export class InMemoryPublisher {
     if (request.chunkIndex >= object.chunkCount) {
       throw new Error(`Upload chunk index out of range: ${request.chunkIndex}`);
     }
+    const decoded = decodeUploadChunk(request);
     const previous = object.chunks.get(request.chunkIndex);
-    if (previous !== undefined && previous !== request.body) {
+    if (previous !== undefined && !bytesEqual(previous, decoded)) {
       throw new Error(`Upload chunk conflict: ${path}#${request.chunkIndex}`);
     }
-    object.chunks.set(request.chunkIndex, request.body);
+    object.chunks.set(request.chunkIndex, decoded);
     return {
       uploadId: session.uploadId,
       path,
@@ -138,20 +149,28 @@ export class InMemoryPublisher {
 
     const pages = [];
     const assets = [];
+    let receivedChunkCount = 0;
     for (const object of session.objects.values()) {
       if (object.chunks.size !== object.chunkCount || [...Array(object.chunkCount).keys()].some((index) => !object.chunks.has(index))) {
         throw new Error(`Upload object is incomplete: ${object.path}`);
       }
-      const body = [...Array(object.chunkCount).keys()].map((index) => object.chunks.get(index)).join("");
+      receivedChunkCount += object.chunks.size;
+      const bytes = concatBytes([...Array(object.chunkCount).keys()].map((index) => object.chunks.get(index)!));
       const value = {
         path: object.path,
         contentType: object.contentType,
-        body,
+        body: object.encoding === "base64" ? encodePublishedBytes(bytes) : decodePublishedText(bytes),
         encoding: object.encoding,
       };
       if (object.kind === "page") pages.push(value);
       else assets.push(value);
     }
+    if (receivedChunkCount !== session.expectedChunkCount || session.objects.size !== session.expectedObjectCount) {
+      throw new Error(`Upload is incomplete: expected ${session.expectedChunkCount} chunks, received ${receivedChunkCount}`);
+    }
+
+    const receivedBytes = [...session.objects.values()].flatMap((object) => [...object.chunks.values()]).reduce((total, bytes) => total + bytes.byteLength, 0);
+    if (receivedBytes !== session.expectedBytes) throw new Error("Upload byte size does not match the declared total");
 
     const result = this.commitBundle(session.siteId, {
       formatVersion: session.formatVersion,
@@ -202,6 +221,8 @@ export class InMemoryPublisher {
 
     const stored: StoredSite = existing || { record, revisions: new Map() };
     stored.record = record;
+    // Production keeps only the current revision; the memory adapter mirrors that rule.
+    stored.revisions.clear();
     stored.revisions.set(revision, objects);
     this.sites.set(resolvedSiteId, stored);
 
@@ -260,13 +281,31 @@ function validateBundle(bundle: PublishBundle): void {
 
 function validateUploadStart(request: PublishUploadStartRequest): void {
   if (request.formatVersion !== 1) throw new Error("Unsupported PublishBundle formatVersion");
+  if (request.chunkProtocolVersion !== 2) throw new Error("Unsupported upload chunk protocol");
   if (!String(request.sourcePath || "").trim() || !String(request.title || "").trim()) {
     throw new Error("Publish upload sourcePath and title are required");
   }
   if (!Number.isInteger(request.chunkCount) || request.chunkCount < 1) {
     throw new Error("Publish upload must contain at least one chunk");
   }
+  if (!Number.isInteger(request.objectCount) || request.objectCount < 1) throw new Error("Publish upload objectCount is required");
+  if (!Number.isInteger(request.totalBytes) || request.totalBytes < 1) throw new Error("Publish upload totalBytes is required");
   if (!String(request.idempotencyKey || "").trim()) {
     throw new Error("Publish upload idempotencyKey is required");
   }
+}
+
+function bytesEqual(left: Uint8Array, right: Uint8Array): boolean {
+  return left.byteLength === right.byteLength && left.every((value, index) => value === right[index]);
+}
+
+function concatBytes(chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
 }
